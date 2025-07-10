@@ -27,8 +27,6 @@ module FPU_Top (
 );
 
     // --- Opcode Definitions ---
-    // Note: This is a sample opcode mapping.
-    // A real FPU might have a more complex instruction format (e.g., like RISC-V).
     localparam OP_FADD_S  = 7'b0000000; // FP32 Add
     localparam OP_FADD_D  = 7'b0000001; // FP64 Add
     localparam OP_FSUB_S  = 7'b0000100; // FP32 Subtract
@@ -41,17 +39,13 @@ module FPU_Top (
     localparam OP_FSQRT_D = 7'b0101101; // FP64 Square Root
     localparam OP_FCMP_S  = 7'b1010000; // FP32 Compare
     localparam OP_FCMP_D  = 7'b1010001; // FP64 Compare
-
-    // Conversion opcodes (using a simplified mapping)
-    // A more robust design might use funct3/funct7 fields from the instruction.
+    
     localparam OP_FCVT_S_D  = 7'b0010000; // FP64 -> FP32
     localparam OP_FCVT_D_S  = 7'b0010001; // FP32 -> FP64
     localparam OP_FCVT_W_S  = 7'b0010010; // FP32 -> INT32
     localparam OP_FCVT_WU_S = 7'b0010011; // FP32 -> UINT32
     localparam OP_FCVT_S_W  = 7'b0010100; // INT32 -> FP32
     localparam OP_FCVT_S_WU = 7'b0010101; // UINT32 -> FP32
-    // (Add more conversion opcodes for FP64 as needed)
-
 
     // --- Internal Wires for connecting to sub-modules ---
     logic [63:0] adder_result, multiplier_result, divider_result, sqrt_result, convert_result;
@@ -65,6 +59,16 @@ module FPU_Top (
     // --- Sub-module control signals ---
     logic        adder_sub_op;
     logic        is_double;
+    logic [1:0]  convert_input_type;
+    logic [1:0]  convert_output_type;
+
+    // --- Conversion Type Constants ---
+    localparam FP32 = 2'b00, FP64 = 2'b01, INT32 = 2'b10, UINT32 = 2'b11;
+    
+    // --- Intermediate Flags ---
+    logic        sel_adder_flags, sel_mult_flags, sel_div_flags, sel_sqrt_flags, sel_conv_flags, sel_cmp_flags;
+    logic [3:0]  arith_flags;
+    logic [3:0]  adder_flags, mult_flags, div_flags, sqrt_flags, conv_flags;
 
     // --- Instantiate all functional units ---
     FP_Adder_Subtractor adder_inst (
@@ -126,10 +130,6 @@ module FPU_Top (
         .flag_underflow(convert_underflow), .flag_inexact(convert_inexact)
     );
 
-    // --- Control logic for FP_Convert ---
-    logic [1:0] convert_input_type;
-    logic [1:0] convert_output_type;
-    localparam FP32 = 2'b00, FP64 = 2'b01, INT32 = 2'b10, UINT32 = 2'b11;
 
     // --- Main Combinational Logic: Opcode Decoding and Output Muxing ---
     always_comb begin
@@ -152,78 +152,38 @@ module FPU_Top (
 
         // Decode opcode to select operation and drive outputs
         case (opcode)
-            OP_FADD_S: begin
-                is_double = 1'b0;
-                adder_sub_op = 1'b0;
+            OP_FADD_S, OP_FADD_D, OP_FSUB_S, OP_FSUB_D: begin
+                is_double = opcode[0];
+                adder_sub_op = opcode[2];
                 result_out = adder_result;
                 {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {adder_invalid, adder_overflow, adder_underflow, adder_inexact};
             end
-            OP_FADD_D: begin
-                is_double = 1'b1;
-                adder_sub_op = 1'b0;
-                result_out = adder_result;
-                {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {adder_invalid, adder_overflow, adder_underflow, adder_inexact};
-            end
-            OP_FSUB_S: begin
-                is_double = 1'b0;
-                adder_sub_op = 1'b1;
-                result_out = adder_result;
-                {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {adder_invalid, adder_overflow, adder_underflow, adder_inexact};
-            end
-            OP_FSUB_D: begin
-                is_double = 1'b1;
-                adder_sub_op = 1'b1;
-                result_out = adder_result;
-                {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {adder_invalid, adder_overflow, adder_underflow, adder_inexact};
-            end
-            OP_FMUL_S: begin
-                is_double = 1'b0;
+            OP_FMUL_S, OP_FMUL_D: begin
+                is_double = opcode[0];
                 result_out = multiplier_result;
                 {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {multiplier_invalid, multiplier_overflow, multiplier_underflow, multiplier_inexact};
             end
-            OP_FMUL_D: begin
-                is_double = 1'b1;
-                result_out = multiplier_result;
-                {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {multiplier_invalid, multiplier_overflow, multiplier_underflow, multiplier_inexact};
-            end
-            OP_FDIV_S: begin
-                is_double = 1'b0;
+            OP_FDIV_S, OP_FDIV_D: begin
+                is_double = opcode[0];
                 result_out = divider_result;
                 {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {divider_invalid, divider_overflow, divider_underflow, divider_inexact};
             end
-            OP_FDIV_D: begin
-                is_double = 1'b1;
-                result_out = divider_result;
-                {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {divider_invalid, divider_overflow, divider_underflow, divider_inexact};
-            end
-            OP_FSQRT_S: begin
-                is_double = 1'b0;
+            OP_FSQRT_S, OP_FSQRT_D: begin
+                is_double = opcode[0];
                 result_out = sqrt_result;
                 {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {sqrt_invalid, sqrt_overflow, sqrt_underflow, sqrt_inexact};
             end
-            OP_FSQRT_D: begin
-                is_double = 1'b1;
-                result_out = sqrt_result;
-                {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {sqrt_invalid, sqrt_overflow, sqrt_underflow, sqrt_inexact};
-            end
-            OP_FCMP_S: begin
-                is_double = 1'b0;
-                // Compare result is typically not a FP number but flags.
-                // Outputting flags directly. Result can be integer (e.g., -1, 0, 1) or just flags.
+            OP_FCMP_S, OP_FCMP_D: begin
+                is_double = opcode[0];
+                // Compare result is not a FP number but flags.
                 flag_invalid = cmp_invalid;
                 flag_lt = cmp_lt;
                 flag_eq = cmp_eq;
                 flag_gt = cmp_gt;
                 flag_unordered = cmp_unordered;
             end
-            OP_FCMP_D: begin
-                is_double = 1'b1;
-                flag_invalid = cmp_invalid;
-                flag_lt = cmp_lt;
-                flag_eq = cmp_eq;
-                flag_gt = cmp_gt;
-                flag_unordered = cmp_unordered;
-            end
+            
+            // --- Conversion Opcodes ---
             OP_FCVT_S_D: begin
                 convert_input_type = FP64;
                 convert_output_type = FP32;
@@ -237,24 +197,28 @@ module FPU_Top (
                 {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {convert_invalid, convert_overflow, convert_underflow, convert_inexact};
             end
             OP_FCVT_W_S: begin
+                is_double = 1'b0; // Op is on FP32
                 convert_input_type = FP32;
                 convert_output_type = INT32;
                 result_out = convert_result;
                 {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {convert_invalid, convert_overflow, convert_underflow, convert_inexact};
             end
             OP_FCVT_WU_S: begin
+                is_double = 1'b0; // Op is on FP32
                 convert_input_type = FP32;
                 convert_output_type = UINT32;
                 result_out = convert_result;
                 {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {convert_invalid, convert_overflow, convert_underflow, convert_inexact};
             end
             OP_FCVT_S_W: begin
+                is_double = 1'b0; // Result is FP32
                 convert_input_type = INT32;
                 convert_output_type = FP32;
                 result_out = convert_result;
                 {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {convert_invalid, convert_overflow, convert_underflow, convert_inexact};
             end
             OP_FCVT_S_WU: begin
+                is_double = 1'b0; // Result is FP32
                 convert_input_type = UINT32;
                 convert_output_type = FP32;
                 result_out = convert_result;
@@ -262,16 +226,9 @@ module FPU_Top (
             end
 
             default: begin
-                // Default to an invalid operation
-                result_out     = 64'h7ff8000000000001; // Default QNaN
+                // Default to an invalid operation, return QNaN
+                result_out     = 64'h7FF8_0000_0000_0000; // Default QNaN
                 flag_invalid   = 1'b1;
-                flag_overflow  = 1'b0;
-                flag_underflow = 1'b0;
-                flag_inexact   = 1'b0;
-                flag_lt        = 1'b0;
-                flag_eq        = 1'b0;
-                flag_gt        = 1'b0;
-                flag_unordered = 1'b0;
             end
         endcase
     end

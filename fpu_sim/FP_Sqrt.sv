@@ -58,7 +58,7 @@ module FP_Sqrt (
         // --- 1. Special Value Handling ---
         final_sign = 1'b0;
         if (is_a_nan) begin normal_path_enable=0; enc_is_result_nan=1; if(!mant_a_dec[51]) flag_invalid=1; end
-        else if (sign_a_dec == 1'b1 && !is_a_zero) begin normal_path_enable=0; final_exp_biased=11'b11111111111; final_mant={2'b11, 51'b0}; flag_invalid=1; enc_is_result_nan=1; end
+        else if (sign_a_dec == 1'b1 && !is_a_zero) begin normal_path_enable=0; final_exp_biased='1; final_mant={1'b1, 52'h80000_00000000};; flag_invalid=1; enc_is_result_nan=1; end
         else if (is_a_zero) begin normal_path_enable=0; enc_is_result_zero=1; end
         else if (is_a_infinity) begin normal_path_enable=0; enc_is_result_infinity=1; end
 

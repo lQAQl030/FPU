@@ -23,7 +23,7 @@ VERILOG_SOURCES = \
     FPU_Top.sv
 
 # --- Verilator Flags ---
-VERILATOR_FLAGS = --cc --exe --trace -Wall -Wno-fatal
+VERILATOR_FLAGS = --cc --exe --trace -Wall -Wno-fatal -Wno-WIDTH -Wno-SELRANGE -Wno-PINCONNECTEMPTY
 
 # --- C++ Compiler Flags ---
 # ** FIX: Use C++14 standard **

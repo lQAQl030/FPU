@@ -1,19 +1,17 @@
-// tb_fpu.cpp
 #include <iostream>
 #include <vector>
 #include <cstdint>
 #include <cmath>
 #include <iomanip>
 
-// Verilator核心標頭檔
+// Verilator header
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
-// FPU Top模組的Verilator生成標頭檔
+// FPU Top module header
 #include "VFPU_Top.h"
 
-// 輔助函數，用於在float/double和其整數表示之間轉換
-// 這對於設定操作數和比較結果至關重要
+// helper function
 uint32_t f32_to_u32(float f) {
     union { float f; uint32_t u; } converter = {f};
     return converter.u;
@@ -31,42 +29,63 @@ double u64_to_f64(uint64_t u) {
     return converter.d;
 }
 
-// 測試案例結構
+// --- Opcode Definitions (Must match FPU_Top.v) ---
+const uint8_t OP_FADD_S  = 0b0000000, OP_FADD_D  = 0b0000001;
+const uint8_t OP_FSUB_S  = 0b0000100, OP_FSUB_D  = 0b0000101;
+const uint8_t OP_FMUL_S  = 0b0001000, OP_FMUL_D  = 0b0001001;
+const uint8_t OP_FDIV_S  = 0b0001100, OP_FDIV_D  = 0b0001101;
+const uint8_t OP_FSQRT_S = 0b0101100, OP_FSQRT_D = 0b0101101;
+const uint8_t OP_FCMP_S  = 0b1010000, OP_FCMP_D  = 0b1010001;
+const uint8_t OP_FCVT_S_D  = 0b0010000;
+const uint8_t OP_FCVT_D_S  = 0b0010001;
+const uint8_t OP_FCVT_W_S  = 0b0010010;
+const uint8_t OP_FCVT_WU_S = 0b0010011;
+const uint8_t OP_FCVT_S_W  = 0b0010100;
+const uint8_t OP_FCVT_S_WU = 0b0010101;
+
+
+// --- Test Case Result Type ---
+enum ResultType {
+    FP32, FP64, INT, CMP
+};
+
+// define testcase
 struct TestCase {
     std::string name;
     uint8_t  opcode;
+    ResultType result_type;
     uint64_t operand_a;
     uint64_t operand_b;
     uint8_t  rounding_mode;
 
-    // 預期輸出
+    // output and flags
     uint64_t expected_result;
     bool     expected_invalid;
     bool     expected_overflow;
     bool     expected_underflow;
     bool     expected_inexact;
-    // 比較旗標
+    // cmp flags
     bool     expected_lt;
     bool     expected_eq;
     bool     expected_gt;
     bool     expected_unordered;
 };
 
-// 模擬時鐘
+// simulate clock
 vluint64_t main_time = 0;
 double sc_time_stamp() {
     return main_time;
 }
 
-// 執行單個測試案例的函數
+// run one testcase
 bool run_test(VFPU_Top* top, VerilatedVcdC* tfp, const TestCase& test) {
-    // 設定輸入
+    // setting inputs
     top->opcode = test.opcode;
     top->operand_a = test.operand_a;
     top->operand_b = test.operand_b;
     top->rounding_mode = test.rounding_mode;
 
-    // 模擬一個時脈週期
+    // simulate one clock
     top->clk = 0;
     top->eval();
     main_time++;
@@ -77,46 +96,53 @@ bool run_test(VFPU_Top* top, VerilatedVcdC* tfp, const TestCase& test) {
     main_time++;
     if (tfp) tfp->dump(main_time);
 
-    // 檢查輸出
+    // output check
     bool pass = true;
-    // 根據操作碼檢查不同的輸出
-    // ** FIX: Use C++ binary literal `0b` instead of Verilog's `5'b` **
-    if (test.opcode >= 0b01010 && test.opcode <= 0b01011) { // Compare Ops
-        if (top->flag_lt != test.expected_lt) {
-            pass = false;
-            std::cout << "    \033[31m[FAIL]\033[0m LT flag mismatch. Got: " << (int)top->flag_lt << ", Expected: " << (int)test.expected_lt << std::endl;
-        }
-        if (top->flag_eq != test.expected_eq) {
-            pass = false;
-            std::cout << "    \033[31m[FAIL]\033[0m EQ flag mismatch. Got: " << (int)top->flag_eq << ", Expected: " << (int)test.expected_eq << std::endl;
-        }
-        if (top->flag_gt != test.expected_gt) {
-            pass = false;
-            std::cout << "    \033[31m[FAIL]\033[0m GT flag mismatch. Got: " << (int)top->flag_gt << ", Expected: " << (int)test.expected_gt << std::endl;
-        }
-        if (top->flag_unordered != test.expected_unordered) {
-            pass = false;
-            std::cout << "    \033[31m[FAIL]\033[0m Unordered flag mismatch. Got: " << (int)top->flag_unordered << ", Expected: " << (int)test.expected_unordered << std::endl;
-        }
-    } else { // Arithmetic/Convert Ops
-        // INT check
-        if (test.opcode == 0b0010010 && top->result_out != test.expected_result) {
-             pass = false;
-             std::cout << "    \033[31m[FAIL]\033[0m Result mismatch (INT32). Got: " << std::dec << top->result_out << ", Expected: " << test.expected_result << std::endl;
-        }
-        // FP32 check (only lower 32 bits matter)
-        else if (test.opcode % 2 == 0 && (top->result_out & 0xFFFFFFFF) != (test.expected_result & 0xFFFFFFFF)) {
-             pass = false;
-             std::cout << "    \033[31m[FAIL]\033[0m Result mismatch (FP32). Got: " << std::hex << u32_to_f32(top->result_out & 0xFFFFFFFF) << ", Expected: " << u32_to_f32(test.expected_result & 0xFFFFFFFF) << std::dec << std::endl;
-        }
-        // FP64 check (all 64 bits matter)
-        else if (test.opcode % 2 != 0 && top->result_out != test.expected_result) {
-             pass = false;
-             std::cout << "    \033[31m[FAIL]\033[0m Result mismatch (FP64). Got: " << std::hex << u64_to_f64(top->result_out) << ", Expected: " << u64_to_f64(test.expected_result) << std::dec << std::endl;
-        }
+    switch (test.result_type) {
+        case CMP:
+            if (top->flag_lt != test.expected_lt) {
+                pass = false;
+                std::cout << "    \033[31m[FAIL]\033[0m LT flag mismatch. Got: " << (int)top->flag_lt << ", Expected: " << (int)test.expected_lt << std::endl;
+            }
+            if (top->flag_eq != test.expected_eq) {
+                pass = false;
+                std::cout << "    \033[31m[FAIL]\033[0m EQ flag mismatch. Got: " << (int)top->flag_eq << ", Expected: " << (int)test.expected_eq << std::endl;
+            }
+            if (top->flag_gt != test.expected_gt) {
+                pass = false;
+                std::cout << "    \033[31m[FAIL]\033[0m GT flag mismatch. Got: " << (int)top->flag_gt << ", Expected: " << (int)test.expected_gt << std::endl;
+            }
+            if (top->flag_unordered != test.expected_unordered) {
+                pass = false;
+                std::cout << "    \033[31m[FAIL]\033[0m Unordered flag mismatch. Got: " << (int)top->flag_unordered << ", Expected: " << (int)test.expected_unordered << std::endl;
+            }
+            break;
+        
+        case INT:
+            if (top->result_out != test.expected_result) {
+                 pass = false;
+                 std::cout << "    \033[31m[FAIL]\033[0m Result mismatch (INT). Got: " << std::dec << (int32_t)top->result_out << ", Expected: " << (int32_t)test.expected_result << std::endl;
+            }
+            break;
+
+        case FP32:
+            if ((top->result_out & 0xFFFFFFFF) != (test.expected_result & 0xFFFFFFFF)) {
+                 pass = false;
+                 std::cout << "    \033[31m[FAIL]\033[0m Result mismatch (FP32). Got: 0x" << std::hex << (top->result_out & 0xFFFFFFFF) << " (" << u32_to_f32(top->result_out & 0xFFFFFFFF) 
+                           << "), Expected: 0x" << (test.expected_result & 0xFFFFFFFF) << " (" << u32_to_f32(test.expected_result & 0xFFFFFFFF) << ")" << std::dec << std::endl;
+            }
+            break;
+
+        case FP64:
+             if (top->result_out != test.expected_result) {
+                 pass = false;
+                 std::cout << "    \033[31m[FAIL]\033[0m Result mismatch (FP64). Got: 0x" << std::hex << top->result_out << " (" << u64_to_f64(top->result_out)
+                           << "), Expected: 0x" << test.expected_result << " (" << u64_to_f64(test.expected_result) << ")" << std::dec << std::endl;
+            }
+            break;
     }
 
-    // 檢查狀態旗標
+    // flag check
     if (top->flag_invalid != test.expected_invalid) {
         pass = false;
         std::cout << "    \033[31m[FAIL]\033[0m Invalid flag mismatch. Got: " << (int)top->flag_invalid << ", Expected: " << (int)test.expected_invalid << std::endl;
@@ -138,49 +164,85 @@ bool run_test(VFPU_Top* top, VerilatedVcdC* tfp, const TestCase& test) {
 }
 
 int main(int argc, char** argv, char** env) {
-    // 初始化Verilator
+    // initialize Verilator
     Verilated::commandArgs(argc, argv);
     Verilated::traceEverOn(true);
 
-    // 實例化FPU模組
+    // initialize FPU
     VFPU_Top* top = new VFPU_Top;
 
-    // 實例化VCD波形追蹤器
+    // initialize vcd
     VerilatedVcdC* tfp = new VerilatedVcdC;
     top->trace(tfp, 99);
     tfp->open("waveform.vcd");
 
-    // 定義Opcode (與 FPU_Top.v 中一致)
-    const uint8_t OP_FADD_S = 0b0000000, OP_FADD_D = 0b0000001;
-    const uint8_t OP_FSUB_S = 0b0000100, OP_FSUB_D = 0b0000101;
-    const uint8_t OP_FMUL_S = 0b0001000, OP_FMUL_D = 0b0001001;
-    const uint8_t OP_FDIV_S = 0b0001100, OP_FDIV_D = 0b0001101;
-    const uint8_t OP_FSQRT_S = 0b0101100, OP_FSQRT_D = 0b0101101;
-    const uint8_t OP_FCMP_S = 0b1010000, OP_FCMP_D = 0b1010001;
-    const uint8_t OP_FCVT_S_W = 0b0010100;
-    const uint8_t OP_FCVT_W_S = 0b0010010;
-
-    // 定義測試案例
+    // Testcases
     std::vector<TestCase> test_suite = {
-        {"FADD.S: 1.5 + 2.75", OP_FADD_S, f32_to_u32(1.5f), f32_to_u32(2.75f), 0, f32_to_u32(4.25f), 0,0,0,0, 0,0,0,0},
-        {"FADD.D: 10.5 + 20.25", OP_FADD_D, f64_to_u64(10.5), f64_to_u64(20.25), 0, f64_to_u64(30.75), 0,0,0,0, 0,0,0,0},
-        {"FSUB.S: 10.0 - 5.5", OP_FSUB_S, f32_to_u32(10.0f), f32_to_u32(5.5f), 0, f32_to_u32(4.5f), 0,0,0,0, 0,0,0,0},
-        {"FMUL.D: 3.0 * 2.5", OP_FMUL_D, f64_to_u64(3.0), f64_to_u64(2.5), 0, f64_to_u64(7.5), 0,0,0,0, 0,0,0,0},
-        {"FDIV.S: 100.0 / 4.0", OP_FDIV_S, f32_to_u32(100.0f), f32_to_u32(4.0f), 0, f32_to_u32(25.0f), 0,0,0,0, 0,0,0,0},
-        {"FSQRT.D: sqrt(16.0)", OP_FSQRT_D, f64_to_u64(16.0), 0, 0, f64_to_u64(4.0), 0,0,0,0, 0,0,0,0},
-        {"FSQRT.D: sqrt(-1.0) -> Invalid NaN", OP_FSQRT_D, f64_to_u64(-1.0), 0, 0, 0x7ff8000000000000, 1,0,0,0, 0,0,0,0},
-        {"DIV.S by Zero -> Infinity", OP_FDIV_S, f32_to_u32(5.0f), f32_to_u32(0.0f), 0, 0x7f800000, 0,1,0,0, 0,0,0,0}, 
-        {"Inf - Inf -> Invalid NaN", OP_FSUB_D, f64_to_u64(INFINITY), f64_to_u64(INFINITY), 0, 0x7ff8000000000000, 1,0,0,0, 0,0,0,0},
-        {"FCMP.D: 5.0 > 3.0", OP_FCMP_D, f64_to_u64(5.0), f64_to_u64(3.0), 0, 0, 0,0,0,0, 0,0,1,0},
-        {"FCMP.S: -2.0 < -1.0", OP_FCMP_S, f32_to_u32(-2.0f), f32_to_u32(-1.0f), 0, 0, 0,0,0,0, 1,0,0,0},
-        {"FCMP.D: 7.0 == 7.0", OP_FCMP_D, f64_to_u64(7.0), f64_to_u64(7.0), 0, 0, 0,0,0,0, 0,1,0,0},
-        {"FCMP.D: +0.0 == -0.0", OP_FCMP_D, f64_to_u64(0.0), f64_to_u64(-0.0), 0, 0, 0,0,0,0, 0,1,0,0},
-        {"FCMP.D: 5.0 vs NaN -> Unordered", OP_FCMP_D, f64_to_u64(5.0), f64_to_u64(NAN), 0, 0, 1,0,0,0, 0,0,0,1}, // Invalid flag for SNaN
-        {"FCVT.S.W: int(123) -> float", OP_FCVT_S_W, 123, 0, 0, f32_to_u32(123.0f), 0,0,0,0, 0,0,0,0},
-        {"FCVT.W.S: float(3.75) -> int (RTZ)", OP_FCVT_W_S, f32_to_u32(3.75f), 0, 1, 3, 0,0,0,1, 0,0,0,0} // Inexact=1
+        // Name, Opcode, ResultType, OpA, OpB, RoundMode, ExpectedResult, Inv, Ovf, Unf, Inex, LT,EQ,GT,Unord
+
+        // --- Basic Sanity Checks ---
+        {"FADD.S: 1.5 + 2.75",           OP_FADD_S,  FP32, f32_to_u32(1.5f),    f32_to_u32(2.75f),   0, f32_to_u32(4.25f),    0,0,0,0, 0,0,0,0},
+        {"FADD.D: 10.5 + 20.25",         OP_FADD_D,  FP64, f64_to_u64(10.5),    f64_to_u64(20.25),   0, f64_to_u64(30.75),    0,0,0,0, 0,0,0,0},
+        {"FSUB.S: 10.0 - 5.5",           OP_FSUB_S,  FP32, f32_to_u32(10.0f),   f32_to_u32(5.5f),    0, f32_to_u32(4.5f),     0,0,0,0, 0,0,0,0},
+        {"FSUB.D: 10.5 - 20.25",         OP_FSUB_D,  FP64, f64_to_u64(10.5),    f64_to_u64(20.25),   0, f64_to_u64(-9.75),    0,0,0,0, 0,0,0,0},
+        {"FMUL.D: 3.0 * 2.5",            OP_FMUL_D,  FP64, f64_to_u64(3.0),     f64_to_u64(2.5),     0, f64_to_u64(7.5),      0,0,0,0, 0,0,0,0},
+        {"FDIV.S: 100.0 / 4.0",          OP_FDIV_S,  FP32, f32_to_u32(100.0f),  f32_to_u32(4.0f),    0, f32_to_u32(25.0f),    0,0,0,0, 0,0,0,0},
+        {"FDIV.S: 4.0 / 10.0",           OP_FDIV_S,  FP32, f32_to_u32(4.0f),    f32_to_u32(10.0f),   0, f32_to_u32(0.4f),     0,0,0,1, 0,0,0,0},
+        {"FDIV.D: 90.0 / 4.0",           OP_FDIV_D,  FP32, f64_to_u64(90.0),    f64_to_u64(4.0),     0, f64_to_u64(22.5),     0,0,0,0, 0,0,0,0},
+        {"FDIV.D: 4.0 / 10.0",           OP_FDIV_D,  FP64, f64_to_u64(4.0),     f64_to_u64(10.0),    0, f64_to_u64(0.4),      0,0,0,1, 0,0,0,0},
+        {"FSQRT.D: sqrt(16.0)",          OP_FSQRT_D, FP64, f64_to_u64(16.0),    0,                   0, f64_to_u64(4.0),      0,0,0,0, 0,0,0,0},
+
+        // --- Rounding Mode Tests (using 1/3 which is inexact) ---
+        {"FDIV.D: 1.0/3.0 (RNE)",        OP_FDIV_D,  FP64, f64_to_u64(1.0),     f64_to_u64(3.0),     0, 0x3FD5555555555555,   0,0,0,1, 0,0,0,0}, // RNE
+        {"FDIV.D: 1.0/3.0 (RTZ)",        OP_FDIV_D,  FP64, f64_to_u64(1.0),     f64_to_u64(3.0),     1, 0x3FD5555555555555,   0,0,0,1, 0,0,0,0}, // RTZ
+        {"FDIV.D: 1.0/3.0 (RDN)",        OP_FDIV_D,  FP64, f64_to_u64(1.0),     f64_to_u64(3.0),     2, 0x3FD5555555555555,   0,0,0,1, 0,0,0,0}, // RDN
+        {"FDIV.D: 1.0/3.0 (RUP)",        OP_FDIV_D,  FP64, f64_to_u64(1.0),     f64_to_u64(3.0),     3, 0x3FD5555555555556,   0,0,0,1, 0,0,0,0}, // RUP
+        {"FDIV.D: -1.0/3.0 (RDN)",       OP_FDIV_D,  FP64, f64_to_u64(-1.0),    f64_to_u64(3.0),     2, 0xBFD5555555555556,   0,0,0,1, 0,0,0,0}, // RDN (towards -inf)
+        {"FDIV.D: -1.0/3.0 (RUP)",       OP_FDIV_D,  FP64, f64_to_u64(-1.0),    f64_to_u64(3.0),     3, 0xBFD5555555555555,   0,0,0,1, 0,0,0,0}, // RUP (towards +inf)
+
+        // --- Special Value Tests (Zero, Inf, NaN) ---
+        {"FSQRT.D: sqrt(-1.0) -> Invalid QNaN", OP_FSQRT_D, FP64, f64_to_u64(-1.0), 0,               0, f64_to_u64(NAN),   1,0,0,0, 0,0,0,0},
+        {"FDIV.S by Zero -> Infinity",   OP_FDIV_S,  FP32, f32_to_u32(5.0f),    f32_to_u32(0.0f),    0, f32_to_u32(INFINITY),   0,1,0,0, 0,0,0,0}, 
+        {"Inf - Inf -> Invalid QNaN",    OP_FSUB_D,  FP64, f64_to_u64(INFINITY),f64_to_u64(INFINITY),0, f64_to_u64(NAN),   1,0,0,0, 0,0,0,0},
+        {"0 / 0 -> Invalid NaN  (32)",   OP_FDIV_S,  FP32, f32_to_u32(0.0f),    f32_to_u32(0.0f),    0, f32_to_u32(NAN),   1,0,0,0, 0,0,0,0},
+        {"0 / 0 -> Invalid QNaN (64)",   OP_FDIV_D,  FP64, f64_to_u64(0.0),     f64_to_u64(0.0),     0, f64_to_u64(NAN),   1,0,0,0, 0,0,0,0},
+        {"Inf / Inf -> Invalid QNaN",    OP_FDIV_D,  FP64, f64_to_u64(INFINITY),f64_to_u64(INFINITY),0, f64_to_u64(NAN),   1,0,0,0, 0,0,0,0},
+        {"0 * Inf -> Invalid QNaN",      OP_FMUL_D,  FP64, f64_to_u64(0.0),     f64_to_u64(INFINITY),0, f64_to_u64(NAN),   1,0,0,0, 0,0,0,0},
+        {"FADD.D: 1.0 + QNaN",           OP_FADD_D,  FP64, f64_to_u64(1.0),     f64_to_u64(NAN),     0, f64_to_u64(NAN),   1,0,0,0, 0,0,0,0},
+        {"FADD.D: 1.0 + SNaN",           OP_FADD_D,  FP64, f64_to_u64(1.0),     0x7ff4000000000000,  0, f64_to_u64(NAN),   1,0,0,0, 0,0,0,0}, // SNaN->QNaN + Invalid
+
+        // --- Compare Tests ---
+        {"FCMP.D: 5.0 > 3.0",            OP_FCMP_D,  CMP,  f64_to_u64(5.0),     f64_to_u64(3.0),     0, 0,                    0,0,0,0, 0,0,1,0},
+        {"FCMP.S: -2.0 < -1.0",          OP_FCMP_S,  CMP,  f32_to_u32(-2.0f),   f32_to_u32(-1.0f),   0, 0,                    0,0,0,0, 1,0,0,0},
+        {"FCMP.D: 7.0 == 7.0",           OP_FCMP_D,  CMP,  f64_to_u64(7.0),     f64_to_u64(7.0),     0, 0,                    0,0,0,0, 0,1,0,0},
+        {"FCMP.D: +0.0 == -0.0",         OP_FCMP_D,  CMP,  f64_to_u64(0.0),     f64_to_u64(-0.0),    0, 0,                    0,0,0,0, 0,1,0,0},
+        {"FCMP.D: 5.0 vs QNaN -> Unordered",OP_FCMP_D, CMP, f64_to_u64(5.0),     f64_to_u64(NAN),     0, 0,                    0,0,0,0, 0,0,0,1},
+        {"SNaN Compare -> Unordered+Invalid", OP_FCMP_D, CMP, f64_to_u64(5.0),   0x7ff4000000000000,  0, 0,                    1,0,0,0, 0,0,0,1},
+        {"FCMP.D: Denormal < Normal",    OP_FCMP_D,  CMP,  0x0000000000000001,  f64_to_u64(1.0e-300),0, 0,                    0,0,0,0, 1,0,0,0},
+
+        // --- Conversion Tests ---
+        {"FCVT.S.W: int(123) -> float",  OP_FCVT_S_W, FP32, 123,                 0,                   0, f32_to_u32(123.0f),   0,0,0,0, 0,0,0,0},
+        {"FCVT.W.S: float(3.75) -> int (RTZ)", OP_FCVT_W_S, INT, f32_to_u32(3.75f),   0,                   1, 3,                    0,0,0,1, 0,0,0,0},
+        {"FCVT.W.S: float(3.5) -> int (RNE)", OP_FCVT_W_S, INT, f32_to_u32(3.5f),    0,                   0, 4,                    0,0,0,1, 0,0,0,0},
+        {"FCVT.W.S: float(2.5) -> int (RNE)", OP_FCVT_W_S, INT, f32_to_u32(2.5f),    0,                   0, 2,                    0,0,0,1, 0,0,0,0},
+        {"FCVT.W.S: Large float -> INT_MAX", OP_FCVT_W_S, INT, f32_to_u32(3e9f),    0,                   0, 0x7FFFFFFF,           1,0,0,1, 0,0,0,0}, // Invalid=1
+        {"FCVT.W.S: Neg float -> INT_MIN", OP_FCVT_W_S, INT, f32_to_u32(-3e9f),   0,                   0, 0x80000000,           1,0,0,1, 0,0,0,0}, // Invalid=1
+        {"FCVT.S.D: FP64 to FP32",       OP_FCVT_S_D, FP32, f64_to_u64(123.456), 0,                   0, f32_to_u32(123.456f), 0,0,0,1, 0,0,0,0}, // Inexact
+        {"FCVT.D.S: FP32 to FP64",       OP_FCVT_D_S, FP64, f32_to_u32(123.456f),0,                   0, f64_to_u64(123.456f), 0,0,0,0, 0,0,0,0}, // Exact
+
+        // --- Denormal and Underflow Tests ---
+        {"FADD.D: Normal + Denormal",    OP_FADD_D,  FP64, f64_to_u64(1.0),     0x0000000000000001,  0, f64_to_u64(1.0),      0,0,0,1, 0,0,0,0},
+        {"FSUB.S: Min_Normal - Min_Denormal", OP_FSUB_S, FP32, 0x00800000, 0x00000001, 0, 0x007FFFFF, 0,0,0,0, 0,0,0,0}, // Result is max denormal
+        {"FMUL.S: Min_Normal * 0.5 -> Underflow", OP_FMUL_S, FP32, 0x00800000, f32_to_u32(0.5f), 0, 0x00400000, 0,0,1,0, 0,0,0,0}, // Underflow flag set, result is denormal
+        {"FMUL.S: Min_Denormal * 0.5 -> Flush to Zero", OP_FMUL_S, FP32, 0x00000001, f32_to_u32(0.5f), 0, 0x0, 0,0,1,1, 0,0,0,0}, // Underflow and Inexact
+
+        // --- Overflow Tests ---
+        {"FADD.D: MAX_FLOAT + MAX_FLOAT -> Overflow", OP_FADD_D, FP64, 0x7FEFFFFFFFFFFFFF, 0x7FEFFFFFFFFFFFFF, 0, 0x7FF0000000000000, 0,1,0,1, 0,0,0,0},
+        {"FMUL.D: MAX_FLOAT * 2.0 -> Overflow", OP_FMUL_D, FP64, 0x7FEFFFFFFFFFFFFF, f64_to_u64(2.0), 0, 0x7FF0000000000000, 0,1,0,1, 0,0,0,0},
+        {"FCVT.S.W: INT_MAX to FP32", OP_FCVT_S_W, FP32, 0x7FFFFFFF, 0, 0, 0x4f000000, 0,0,0,1, 0,0,0,0}, // 2147483647 -> 2.14748365E9 (inexact)
     };
 
-    // 重置FPU
+    // reset
     top->rst_n = 0;
     top->clk = 0;
     top->eval();
@@ -192,7 +254,7 @@ int main(int argc, char** argv, char** env) {
     if (tfp) tfp->dump(main_time);
     top->rst_n = 1;
 
-    // 執行所有測試
+    // run tests
     int passed_count = 0;
     for (const auto& test : test_suite) {
         std::cout << "Running test: " << test.name << "..." << std::endl;
@@ -202,12 +264,12 @@ int main(int argc, char** argv, char** env) {
         }
     }
     
-    // 輸出總結
+    // Summary
     std::cout << "\n----------------------------------------" << std::endl;
     std::cout << "Test Summary: " << passed_count << " / " << test_suite.size() << " passed." << std::endl;
     std::cout << "----------------------------------------" << std::endl;
 
-    // 清理
+    // clean up
     tfp->close();
     delete top;
     

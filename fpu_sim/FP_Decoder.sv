@@ -3,10 +3,9 @@ module FP_Decoder (
     input  logic        is_double_precision,
 
     output logic        sign_out,
-    // Note: This now outputs the raw, BIASED exponent.
-    // Downstream modules are responsible for subtracting the bias.
+    // Note: This outputs the raw, BIASED exponent.
     output logic [10:0] exponent_out,
-    // Note: This is always a 53-bit value in 1.F or 0.F format.
+    // Note: This is always a 53-bit value with an explicit leading bit (1.F or 0.F).
     output logic [52:0] mantissa_out,
 
     // Flags for identifying the number type
@@ -22,6 +21,7 @@ module FP_Decoder (
     logic        is_exp_max;
     logic        is_exp_zero;
     logic        is_mant_zero;
+    logic        implicit_bit;
 
     always_comb begin
         // --- 1. Extract Raw Components based on precision ---
@@ -35,7 +35,7 @@ module FP_Decoder (
             raw_exponent = {3'b0, fp_in[30:23]}; // Zero-extend to 11 bits
             // Pad FP32's 23-bit mantissa to fit the internal 52-bit field
             raw_mantissa = {fp_in[22:0], 29'b0}; 
-            is_exp_max   = (fp_in[30:23] == 8'hFF);
+            is_exp_max   = (raw_exponent[7:0] == 8'hFF);
         end
 
         // --- 2. Determine Number Type from Raw Components ---
@@ -52,16 +52,16 @@ module FP_Decoder (
         // Output the raw biased exponent directly.
         exponent_out = raw_exponent;
         
-        // Format the mantissa with the implicit bit (1.F or 0.F)
-        if (is_denormal || is_nan) begin
-            // For Denormals and NaNs, the implicit bit is 0.
-            mantissa_out = {1'b0, raw_mantissa};
-        end else if (is_zero || is_infinity) begin
+        // Format the mantissa with the explicit bit (1.F for normal, 0.F for others)
+        // The implicit bit is 1 IFF the number is Normal.
+        implicit_bit = (!is_exp_zero && !is_exp_max);
+        
+        if (is_zero || is_infinity) begin
             // For Zero and Infinity, the mantissa part is all zeros.
             mantissa_out = '0;
-        end else begin // Normal numbers
-            // For Normal numbers, the implicit bit is 1.
-            mantissa_out = {1'b1, raw_mantissa};
+        end else begin
+            // For Normal, Denormal, and NaN, combine the implicit bit and raw mantissa.
+            mantissa_out = {implicit_bit, raw_mantissa};
         end
     end
 
