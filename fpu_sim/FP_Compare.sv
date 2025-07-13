@@ -12,19 +12,19 @@ module FP_Compare (
     logic sign_a, sign_b;
     logic [10:0] exp_a, exp_b;
     logic [52:0] mant_a, mant_b; // Includes implicit bit
-    logic is_zero_a, is_nan_a, is_snan_a;
-    logic is_zero_b, is_nan_b, is_snan_b;
+    logic is_zero_a, is_infinity_a, is_nan_a, is_denormal_a, is_snan_a;
+    logic is_zero_b, is_infinity_b, is_nan_b, is_denormal_b, is_snan_b;
 
     // --- Instantiate Decoders ---
     FP_Decoder decoder_a (
         .fp_in(operand_a), .is_double_precision(is_double_precision),
         .sign_out(sign_a), .exponent_out(exp_a), .mantissa_out(mant_a),
-        .is_zero(is_zero_a), .is_infinity(), .is_nan(is_nan_a), .is_denormal()
+        .is_zero(is_zero_a), .is_infinity(is_infinity_a), .is_nan(is_nan_a), .is_denormal(is_denormal_a)
     );
     FP_Decoder decoder_b (
         .fp_in(operand_b), .is_double_precision(is_double_precision),
         .sign_out(sign_b), .exponent_out(exp_b), .mantissa_out(mant_b),
-        .is_zero(is_zero_b), .is_infinity(), .is_nan(is_nan_b), .is_denormal()
+        .is_zero(is_zero_b), .is_infinity(is_infinity_b), .is_nan(is_nan_b), .is_denormal(is_denormal_b)
     );
     
     // --- SNaN Detection ---
@@ -39,10 +39,13 @@ module FP_Compare (
 
     always_comb begin
         // --- Default assignments ---
-        flag_lt = 1'b0; 
-        flag_eq = 1'b0; 
-        flag_gt = 1'b0;
-        flag_unordered = 1'b0;
+        flag_lt = 0; 
+        flag_eq = 0; 
+        flag_gt = 0;
+        flag_unordered = 0;
+        temp_gt = 0;
+        temp_lt = 0;
+        temp_eq = 0;
         
         // Invalid flag is set for signaling NaNs in comparison
         flag_invalid = is_snan_a_raw || is_snan_b_raw;

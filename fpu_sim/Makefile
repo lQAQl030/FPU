@@ -23,7 +23,7 @@ VERILOG_SOURCES = \
     FPU_Top.sv
 
 # --- Verilator Flags ---
-VERILATOR_FLAGS = --cc --exe --trace -Wall -Wno-fatal -Wno-WIDTH -Wno-SELRANGE -Wno-PINCONNECTEMPTY
+VERILATOR_FLAGS = --cc --exe --trace -Wall -Wno-fatal -Wno-UNUSEDSIGNAL
 
 # --- C++ Compiler Flags ---
 # ** FIX: Use C++14 standard **
@@ -54,4 +54,9 @@ clean:
 	@rm -f waveform.vcd
 	@rm -f $(SIM_EXE)
 
-.PHONY: all run wave clean
+clear:
+	@make clean
+	@clear
+	@make run
+
+.PHONY: all run wave clean clear

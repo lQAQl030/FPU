@@ -26,7 +26,7 @@ module FP_Divider (
     // --- Local Variables ---
     logic normal_path_enable;
     logic [52:0] norm_mant_a, norm_mant_b;
-    logic signed [11:0] unb_exp_a, unb_exp_b, diff_unb_exp, final_unb_exp;
+    logic signed [11:0] unb_exp_a, unb_exp_b, final_unb_exp;
 
     localparam int precision_shift = 60; 
     logic [52+precision_shift:0] dividend;
@@ -36,7 +36,7 @@ module FP_Divider (
     
     logic [23:0] sp_mant_unrounded;
     logic [52:0] result_mant_unrounded;
-    logic [52:0] result_mant_rounded;
+    logic [53:0] result_mant_rounded;
     logic lsb, g_bit, r_bit, s_bit, round_up;
     int bias, max_unb_exp, min_unb_exp;
     int denorm_shift_a, denorm_shift_b;
@@ -56,7 +56,7 @@ module FP_Divider (
         flag_invalid=0; flag_overflow=0; flag_underflow=0; flag_inexact=0;
         final_sign=0; final_exp_biased=0; final_mant=0;
         normal_path_enable=1;
-        norm_mant_a=0; norm_mant_b=0; unb_exp_a=0; unb_exp_b=0; diff_unb_exp=0;
+        norm_mant_a=0; norm_mant_b=0; unb_exp_a=0; unb_exp_b=0;
         dividend=0; divisor=0; quotient=0; norm_quotient=0;
         sp_mant_unrounded=0; result_mant_unrounded=0; result_mant_rounded=0;
         final_unb_exp=0; lsb=0; g_bit=0; r_bit=0; s_bit=0; round_up=0;
@@ -133,18 +133,18 @@ module FP_Divider (
             endcase
             
             if (is_double_precision) begin
-                result_mant_rounded = result_mant_unrounded + round_up;
+                result_mant_rounded = {1'b0, result_mant_unrounded} + round_up;
             end else begin
                 result_mant_rounded = {sp_mant_unrounded + round_up, 29'b0};
             end
             
 
             if (result_mant_rounded[53]) begin
-                final_mant = result_mant_rounded >> 1;
+                result_mant_rounded >>= 1;
                 final_unb_exp += 1;
-            end else begin
-                final_mant = result_mant_rounded;
             end
+
+            final_mant = (is_double_precision) ? result_mant_rounded[52:0] : {result_mant_rounded[52:29], 29'b0};
             
             // --- 2e. Final Pack & Overflow/Underflow check ---
             max_unb_exp = is_double_precision ? 1023 : 127;

@@ -35,7 +35,7 @@ module FP_Adder_Subtractor (
     logic [56:0] mant_sum;
     int norm_shift_amt;
     logic [53:0] mant_rounded;
-    logic [23:0] sp_mant_rounded;
+    logic [24:0] sp_mant_rounded;
     logic lsb, g_bit, r_bit, s_bit, round_up;
     int bias, max_unb_exp, min_unb_exp;
     logic [53:0] denorm_temp, shifted_denorm_g;
@@ -68,9 +68,17 @@ module FP_Adder_Subtractor (
         end else if (is_b_infinity) begin
             normal_path_enable=0; final_sign=eff_sign_b; final_exp_biased='1; final_mant=0;
         end else if (is_a_zero) begin
-            normal_path_enable=0; result = is_subtraction ? {~operand_b[63], operand_b[62:0]} : operand_b;
+            normal_path_enable=0;
+            if (is_subtraction) begin
+                final_sign = ~sign_b_dec;
+                final_unb_exp = exp_b_dec;
+                final_mant = exp_b_dec;
+            end
         end else if (is_b_zero) begin
-            normal_path_enable=0; result = operand_a;
+            normal_path_enable=0;
+            final_sign = ~sign_a_dec;
+            final_unb_exp = exp_a_dec;
+            final_mant = exp_a_dec;
         end
 
         // --- 2. Normal Path ---
@@ -122,7 +130,7 @@ module FP_Adder_Subtractor (
                     endcase
                     mant_rounded = mant_sum[55:3] + round_up;
                     if (mant_rounded[53]) begin mant_rounded >>= 1; final_unb_exp += 1; end
-                    final_mant = mant_rounded;
+                    final_mant = mant_rounded[52:0];
                 end else begin
                     lsb = mant_sum[32]; g_bit = mant_sum[31]; r_bit = mant_sum[30]; s_bit = |mant_sum[29:0];
                     flag_inexact = g_bit | r_bit | s_bit;
@@ -133,7 +141,7 @@ module FP_Adder_Subtractor (
                     endcase
                     sp_mant_rounded = mant_sum[55:32] + round_up;
                     if (sp_mant_rounded[24]) begin sp_mant_rounded >>= 1; final_unb_exp += 1; end
-                    final_mant = {sp_mant_rounded, 29'b0};
+                    final_mant = {sp_mant_rounded[23:0], 29'b0};
                 end
 
                 max_unb_exp = is_double_precision ? 1023 : 127; min_unb_exp = is_double_precision ? -1022 : -126;

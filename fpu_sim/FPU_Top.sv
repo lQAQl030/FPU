@@ -66,9 +66,9 @@ module FPU_Top (
     localparam FP32 = 2'b00, FP64 = 2'b01, INT32 = 2'b10, UINT32 = 2'b11;
     
     // --- Intermediate Flags ---
-    logic        sel_adder_flags, sel_mult_flags, sel_div_flags, sel_sqrt_flags, sel_conv_flags, sel_cmp_flags;
-    logic [3:0]  arith_flags;
-    logic [3:0]  adder_flags, mult_flags, div_flags, sqrt_flags, conv_flags;
+    // logic        sel_adder_flags, sel_mult_flags, sel_div_flags, sel_sqrt_flags, sel_conv_flags, sel_cmp_flags;
+    // logic [3:0]  arith_flags;
+    // logic [3:0]  adder_flags, mult_flags, div_flags, sqrt_flags, conv_flags;
 
     // --- Instantiate all functional units ---
     FP_Adder_Subtractor adder_inst (
