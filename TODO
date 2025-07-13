@@ -1,6 +1,0 @@
-*   **Tidy up the code**: The current code is too messy and redundant. I also ignored many warnings when I first wrote it, so I plan to do a full cleanup before moving on to the next step.
-*   **FMA module implementation**: Current FPU module is not supporting FMA command like `fmadd.s`, `fmsub.s`. Need to implement it in the next step.
-*   **Synthesizability**: The current divider and square root units use behavioral operators (`/`, `%`) which are not synthesizable into practical hardware. The next step would be to replace them with multi-cycle, iterative algorithms (e.g., non-restoring division).
-*   **Advanced Verification**: Integrate the FPU into a simple RISC-V core (like CV32E40P) and verify it against the **RISC-V DV** instruction stream generator and the **Spike** golden model. This would prove its compliance within a real processor environment.
-*   **Gradual Underflow**: The current model flushes underflow results to zero. A fully compliant FPU would generate denormalized numbers, which requires additional normalization and rounding logic.
-*   **Pipelining**: To achieve higher performance in hardware, the FPU execution path could be pipelined into multiple stages.

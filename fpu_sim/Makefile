@@ -12,22 +12,18 @@ SIM_EXE = V$(TOP_MODULE)
 
 # --- Verilog Source Files ---
 VERILOG_SOURCES = \
-    FP_Encoder.sv \
-    FP_Decoder.sv \
-    FP_Adder_Subtractor.sv \
-    FP_Multiplier.sv \
-    FP_Divider.sv \
-    FP_Sqrt.sv \
-    FP_Compare.sv \
-    FP_Convert.sv \
-    FPU_Top.sv
+    SP_Encoder.v \
+	DP_Encoder.v \
+    SP_Decoder.v \
+	DP_Decoder.v \
+    SP_Adder.v \
+	DP_Adder.v \
+	SP_Compare.v \
+	DP_Compare.v \
+    FPU_Top.v
 
 # --- Verilator Flags ---
-VERILATOR_FLAGS = --cc --exe --trace -Wall -Wno-fatal -Wno-UNUSEDSIGNAL
-
-# --- C++ Compiler Flags ---
-# ** FIX: Use C++14 standard **
-CXX_FLAGS = -std=c++14
+VERILATOR_FLAGS = --cc --exe --trace -Wall -Wno-UNUSED -Wno-WIDTHEXPAND
 
 # --- 目標 ---
 all: $(SIM_EXE)
@@ -38,7 +34,7 @@ $(SIM_EXE): obj_dir/V$(TOP_MODULE).mk
 
 obj_dir/V$(TOP_MODULE).mk: $(VERILOG_SOURCES) $(TB_CPP)
 	@echo "Verilating $(TOP_MODULE)..."
-	@verilator $(VERILATOR_FLAGS) $(VERILOG_SOURCES) --top-module $(TOP_MODULE) --exe $(TB_CPP) -CFLAGS "$(CXX_FLAGS)"
+	@verilator $(VERILATOR_FLAGS) $(VERILOG_SOURCES) --top-module $(TOP_MODULE) --exe $(TB_CPP)
 
 run: $(SIM_EXE)
 	@echo "Running simulation..."
