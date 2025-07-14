@@ -6,6 +6,7 @@ module FPU_Top (
     input [6:0]  func7,         // Operation code to select the function
     input [2:0]  func3,
     input [2:0]  rounding_mode,  // Rounding mode for arithmetic operations
+    input        cvt_wu,
 
     // --- Data Inputs ---
     input [63:0] operand_a,      // Operand A (can be FP64, FP32, INT32, UINT32)
@@ -38,13 +39,15 @@ module FPU_Top (
     // localparam OP_FSQRT_D = 7'b0101101; // FP64 Square Root
     localparam OP_FCMP_S  = 7'b1010000; // FP32 Compare
     localparam OP_FCMP_D  = 7'b1010001; // FP64 Compare
+
+    localparam OP_FCVT_D_S  = 7'b0100001; // FP32 -> FP64
+    localparam OP_FCVT_W_S  = 7'b1100000; // FP32 -> INT32 // UINT32 same
+    localparam OP_FCVT_D_W  = 7'b1101001; // INT32 -> FP64 // UINT32 same
     
-    // localparam OP_FCVT_S_D  = 7'b0010000; // FP64 -> FP32
-    // localparam OP_FCVT_D_S  = 7'b0010001; // FP32 -> FP64
-    // localparam OP_FCVT_W_S  = 7'b0010010; // FP32 -> INT32
-    // localparam OP_FCVT_WU_S = 7'b0010011; // FP32 -> UINT32
-    // localparam OP_FCVT_S_W  = 7'b0010100; // INT32 -> FP32
-    // localparam OP_FCVT_S_WU = 7'b0010101; // UINT32 -> FP32
+    // localparam OP_FCVT_S_D  = 7'b0100000; // FP64 -> FP32
+    // localparam OP_FCVT_W_D  = 7'b1100001; // FP64 -> INT32 // UINT32 same
+    // localparam OP_FCVT_S_W  = 7'b1101000; // INT32 -> FP32 // UINT32 same
+
 
     // --- Internal Wires for connecting to sub-modules ---
     reg [31:0] sp_adder_result;
@@ -56,18 +59,15 @@ module FPU_Top (
     reg sp_cmp, sp_cmp_invalid;
     reg dp_cmp, dp_cmp_invalid;
 
+    reg [63:0] sp_convert_result;
+    reg sp_convert_invalid, sp_convert_overflow, sp_convert_underflow, sp_convert_inexact;
+
     // --- Sub-module control signals ---
-    // reg is_double = opcode[0];
-    // logic [1:0]  convert_input_type;
-    // logic [1:0]  convert_output_type;
+    reg [1:0]  convert_input_type;
+    reg [1:0]  convert_output_type;
 
     // --- Conversion Type Constants ---
-    // localparam FP32 = 2'b00, FP64 = 2'b01, INT32 = 2'b10, UINT32 = 2'b11;
-    
-    // --- Intermediate Flags ---
-    // logic        sel_adder_flags, sel_mult_flags, sel_div_flags, sel_sqrt_flags, sel_conv_flags, sel_cmp_flags;
-    // logic [3:0]  arith_flags;
-    // logic [3:0]  adder_flags, mult_flags, div_flags, sqrt_flags, conv_flags;
+    localparam FP32 = 2'b00, FP64 = 2'b01, INT32 = 2'b10, UINT32 = 2'b11;
 
     // --- Instantiate all functional units ---
     SP_Adder sp_adder_inst (
@@ -101,16 +101,15 @@ module FPU_Top (
         .flag_cmp(dp_cmp), .flag_invalid(dp_cmp_invalid)
     );
 
-    // FP_Adder_Subtractor adder_inst (
-    //     .clk(clk), .rst_n(rst_n),
-    //     .operand_a(operand_a), .operand_b(operand_b),
-    //     .is_subtraction(adder_sub_op),
-    //     .is_double_precision(is_double),
-    //     .rounding_mode(rounding_mode),
-    //     .result(adder_result),
-    //     .flag_invalid(adder_invalid), .flag_overflow(adder_overflow),
-    //     .flag_underflow(adder_underflow), .flag_inexact(adder_inexact)
-    // );
+    SP_Convert sp_convert_inst (
+        .operand_in(operand_a[31:0]), 
+        .input_type(convert_input_type),
+        .output_type(convert_output_type),
+        .rounding_mode(rounding_mode),
+        .result(sp_convert_result),
+        .flag_invalid(sp_convert_invalid), .flag_overflow(sp_convert_overflow),
+        .flag_underflow(sp_convert_underflow), .flag_inexact(sp_convert_inexact)
+    );
 
     // FP_Multiplier multiplier_inst (
     //     .clk(clk), .rst_n(rst_n),
@@ -142,17 +141,6 @@ module FPU_Top (
     //     .flag_underflow(sqrt_underflow), .flag_inexact(sqrt_inexact)
     // );
 
-    // FP_Convert convert_inst (
-    //     .clk(clk), .rst_n(rst_n),
-    //     .operand_in(operand_a), // Convert uses only one operand
-    //     .input_type(convert_input_type),
-    //     .output_type(convert_output_type),
-    //     .rounding_mode(rounding_mode),
-    //     .result(convert_result),
-    //     .flag_invalid(convert_invalid), .flag_overflow(convert_overflow),
-    //     .flag_underflow(convert_underflow), .flag_inexact(convert_inexact)
-    // );
-
 
     // --- Main Combinational Logic: Opcode Decoding and Output Muxing ---
     always @(*) begin
@@ -165,8 +153,8 @@ module FPU_Top (
         flag_inexact   = 1'b0;
         flag_cmp = 0;
 
-        // convert_input_type = '0;
-        // convert_output_type = '0;
+        convert_input_type = '0;
+        convert_output_type = '0;
 
         // Decode opcode to select operation and drive outputs
         case (func7)
@@ -186,6 +174,17 @@ module FPU_Top (
                 flag_cmp = dp_cmp;
                 flag_invalid = dp_cmp_invalid;
             end
+            OP_FCVT_D_S, OP_FCVT_W_S, OP_FCVT_D_W: begin
+                result_out = sp_convert_result;
+                {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {sp_convert_invalid, sp_convert_overflow, sp_convert_underflow, sp_convert_inexact};
+                case (func7)
+                    OP_FCVT_D_S: begin convert_input_type = FP32; convert_output_type = FP64; end
+                    OP_FCVT_W_S: begin convert_input_type = FP32; convert_output_type = (cvt_wu) ? UINT32 : INT32; end
+                    OP_FCVT_D_W: begin convert_input_type = (cvt_wu) ? UINT32 : INT32; convert_output_type = FP64; end
+                    default: begin convert_input_type = FP32; convert_output_type = FP64; end
+                endcase
+            end
+
             // OP_FMUL_S, OP_FMUL_D: begin
             //     is_double = opcode[0];
             //     result_out = multiplier_result;
@@ -200,13 +199,6 @@ module FPU_Top (
             //     is_double = opcode[0];
             //     result_out = sqrt_result;
             //     {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {sqrt_invalid, sqrt_overflow, sqrt_underflow, sqrt_inexact};
-            // end
-            // OP_FCMP_S, OP_FCMP_D: begin
-            //     flag_invalid = cmp_invalid;
-            //     flag_lt = cmp_lt;
-            //     flag_eq = cmp_eq;
-            //     flag_gt = cmp_gt;
-            //     flag_unordered = cmp_unordered;
             // end
             
             // // --- Conversion Opcodes ---
