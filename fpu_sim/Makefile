@@ -24,7 +24,7 @@ VERILOG_SOURCES = \
     FPU_Top.v
 
 # --- Verilator Flags ---
-VERILATOR_FLAGS = --cc --exe --trace -Wall -Wno-UNUSED -Wno-WIDTHEXPAND
+VERILATOR_FLAGS = --cc --exe --trace -Wall -Wno-UNUSED
 
 # --- 目標 ---
 all: $(SIM_EXE)

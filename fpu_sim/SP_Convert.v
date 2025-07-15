@@ -84,7 +84,7 @@ module SP_Convert (
             // --- FP -> FP Conversion ---
             if ((input_type == FP_TYPE_FP32) && (output_type == FP_TYPE_FP64)) begin
                 final_sign = sign_a_dec; final_exp = {3'b0, exp_a_dec} + 11'd896; final_mant = {mant_a_dec, 29'b0};
-                if (exp_a_dec == 11'b0) begin
+                if (exp_a_dec == 8'b0) begin
                     final_exp += 11'd1;
                     for (int i = 52; i >= 29; i--) begin
                         if (!final_mant[52]) begin

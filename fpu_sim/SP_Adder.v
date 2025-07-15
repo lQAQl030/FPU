@@ -94,8 +94,8 @@ module SP_Adder (
                 temp_smaller = {1'b0, mant_a_dec, 3'b0};
                 if(exp_diff == 1 && is_a_denormal && !sign_a_dec) exp_diff = '0;
             end
-            s_bit = (exp_diff > 26) ? |temp_smaller : |(temp_smaller & ((27'd1 << exp_diff) - 1));
-            mant_smaller = (temp_smaller >> exp_diff) | s_bit;
+            s_bit = (exp_diff > 26) ? |temp_smaller : |(temp_smaller & ((28'd1 << exp_diff) - 1));
+            mant_smaller = (temp_smaller >> exp_diff) | {27'b0, s_bit};
 
             eff_sub = (sign_a_dec != eff_sign_b);
             if (eff_sub) mant_sum = mant_larger - mant_smaller; else mant_sum = mant_larger + mant_smaller;
