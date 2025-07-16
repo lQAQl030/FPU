@@ -4,9 +4,8 @@ module FPU_Top (
 
     // --- Control Signals ---
     input [6:0]  func7,         // Operation code to select the function
-    input [2:0]  func3,
-    input [2:0]  rounding_mode,  // Rounding mode for arithmetic operations
-    input        cvt_wu,
+    input [2:0]  func3,         // Rounding mode for arithmetic operations
+    input [4:0]  rs2,           // For selecting convert type
 
     // --- Data Inputs ---
     input [63:0] operand_a,      // Operand A (can be FP64, FP32, INT32, UINT32)
@@ -74,7 +73,7 @@ module FPU_Top (
         .operand_a(operand_a[31:0]),
         .operand_b(operand_b[31:0]),
         .is_subtraction(func7[2]),
-        .rounding_mode(rounding_mode),
+        .rounding_mode(func3),
         .result(sp_adder_result),
         .flag_invalid(sp_adder_invalid), .flag_overflow(sp_adder_overflow),
         .flag_underflow(sp_adder_underflow), .flag_inexact(sp_adder_inexact)
@@ -83,7 +82,7 @@ module FPU_Top (
         .operand_a(operand_a),
         .operand_b(operand_b),
         .is_subtraction(func7[2]),
-        .rounding_mode(rounding_mode),
+        .rounding_mode(func3),
         .result(dp_adder_result),
         .flag_invalid(dp_adder_invalid), .flag_overflow(dp_adder_overflow),
         .flag_underflow(dp_adder_underflow), .flag_inexact(dp_adder_inexact)
@@ -105,7 +104,7 @@ module FPU_Top (
         .operand_in(operand_a[31:0]), 
         .input_type(convert_input_type),
         .output_type(convert_output_type),
-        .rounding_mode(rounding_mode),
+        .rounding_mode(func3),
         .result(sp_convert_result),
         .flag_invalid(sp_convert_invalid), .flag_overflow(sp_convert_overflow),
         .flag_underflow(sp_convert_underflow), .flag_inexact(sp_convert_inexact)
@@ -179,8 +178,8 @@ module FPU_Top (
                 {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {sp_convert_invalid, sp_convert_overflow, sp_convert_underflow, sp_convert_inexact};
                 case (func7)
                     OP_FCVT_D_S: begin convert_input_type = FP32; convert_output_type = FP64; end
-                    OP_FCVT_W_S: begin convert_input_type = FP32; convert_output_type = (cvt_wu) ? UINT32 : INT32; end
-                    OP_FCVT_D_W: begin convert_input_type = (cvt_wu) ? UINT32 : INT32; convert_output_type = FP64; end
+                    OP_FCVT_W_S: begin convert_input_type = FP32; convert_output_type = (rs2[0]) ? UINT32 : INT32; end
+                    OP_FCVT_D_W: begin convert_input_type = (rs2[0]) ? UINT32 : INT32; convert_output_type = FP64; end
                     default: begin convert_input_type = FP32; convert_output_type = FP64; end
                 endcase
             end
