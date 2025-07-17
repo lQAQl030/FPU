@@ -17,6 +17,12 @@ module SP_Convert (
     localparam INT32_MIN_VAL = 64'h0000000080000000;
     localparam UINT32_MAX_VAL = 64'h00000000FFFFFFFF;
     localparam UINT32_MIN_VAL = 64'h0000000000000000;
+    
+    localparam RNE = 3'b000;
+    localparam RTZ = 3'b001;
+    localparam RDN = 3'b010;
+    localparam RUP = 3'b011;
+    localparam RMM = 3'b100;
 
     // operand a
     reg sign_a_dec;
@@ -30,6 +36,7 @@ module SP_Convert (
     reg [52:0] final_mant;
 
     reg [63:0] result_dp;
+    reg [63:0] shifted_val;
     reg [63:0] result_int;
     
     // Decode / Encode
@@ -37,6 +44,8 @@ module SP_Convert (
     DP_Encoder encoder ( .sign_in(final_sign), .exponent_in(final_exp), .mantissa_in(final_mant), .fp_out(result_dp) );
 
     reg normal_path_enable;
+    reg lsb, g_bit, r_bit, s_bit, round_up;
+    int shift_amt;
 
     always @(*) begin
 
@@ -45,7 +54,10 @@ module SP_Convert (
         normal_path_enable = 1;
 
         final_sign=0; final_exp='0; final_mant='0;
+        shifted_val = '0;
         result_int = '0;
+        lsb = 0; g_bit = 0; r_bit = 0; s_bit = 0; round_up = 0;
+        shift_amt = 0;
 
         // --- 1. Special Value Handling ---
         if (input_type == FP_TYPE_FP32) begin
@@ -81,9 +93,11 @@ module SP_Convert (
 
         // --- 2. Normal Path ---
         if (normal_path_enable) begin
-            // --- FP -> FP Conversion ---
+            // --- SP -> DP Conversion ---
             if ((input_type == FP_TYPE_FP32) && (output_type == FP_TYPE_FP64)) begin
-                final_sign = sign_a_dec; final_exp = {3'b0, exp_a_dec} + 11'd896; final_mant = {mant_a_dec, 29'b0};
+                final_sign = sign_a_dec; final_exp = {3'b0, exp_a_dec} + 11'd896; final_mant = {mant_a_dec, 29'b0}; // DP convert
+
+                // handle denormal
                 if (exp_a_dec == 8'b0) begin
                     final_exp += 11'd1;
                     for (int i = 52; i >= 29; i--) begin
@@ -94,97 +108,139 @@ module SP_Convert (
                         end
                     end
                 end
-                
             end
-            // // --- FP -> INT Conversion (Logic is sound, no change needed) ---
-            // else if (input_type == FP_TYPE_FP32 || input_type == FP_TYPE_FP64) begin
-            //     unb_exp_in = $signed(dec_exp_biased) - (input_type == FP_TYPE_FP64 ? FP64_BIAS : FP32_BIAS);
-            //     if (unb_exp_in < 0) begin
-            //         int_result = 0; 
-            //         g_bit = dec_mant[52];
-            //         s_bit = |dec_mant[51:0];
-            //         flag_inexact = g_bit | s_bit;
-            //         if (flag_inexact && ((rounding_mode==3'b011 && !dec_sign) || (rounding_mode==3'b010 && dec_sign))) int_result=1;
-            //     end else if (unb_exp_in > 31) begin
-            //         flag_invalid=1;
-            //         flag_inexact=1;
-            //         if (output_type == FP_TYPE_UINT32) begin
-            //             int_result = dec_sign ? 0 : UINT32_MAX_VAL;
-            //         end else begin
-            //             int_result = dec_sign ? INT32_MIN_VAL : INT32_MAX_VAL;
-            //         end
-            //     end else begin
-            //         shift_amt = 52 - {21'b0, unb_exp_in};
-            //         int_result = {11'b0, dec_mant} >> shift_amt;
-            //         lsb = int_result[0];
-            //         if (shift_amt > 0) begin
-            //             shifted_val = {11'b0, dec_mant} << (64 - shift_amt);
-            //             g_bit = shifted_val[63];
-            //             r_bit = shifted_val[62];
-            //             s_bit = |shifted_val[61:0];
-            //         end
-            //         flag_inexact = g_bit | r_bit | s_bit;
-            //         case(rounding_mode)
-            //             3'b000: round_up = g_bit & (lsb | r_bit | s_bit);
-            //             default: round_up=0;
-            //         endcase;
-            //         int_result += {63'b0, round_up};
-            //         if (dec_sign) begin
-            //             if (output_type == FP_TYPE_UINT32) begin
-            //                 flag_invalid=1; int_result=0;
-            //             end else if (int_result[63:32] != 0 || int_result > 64'h0000000080000000) begin
-            //                 flag_invalid=1; flag_inexact=1; int_result=INT32_MIN_VAL;
-            //             end else int_result = -int_result;
-            //         end else begin
-            //             if (output_type == FP_TYPE_UINT32) begin
-            //                 if (int_result[63:32] != 0) begin
-            //                     flag_invalid=1; flag_inexact=1; int_result=UINT32_MAX_VAL;
-            //                 end
-            //             end else if (int_result > INT32_MAX_VAL) begin
-            //                 flag_invalid=1; flag_inexact=1; int_result=INT32_MAX_VAL;
-            //             end
-            //         end
-            //     end
-            // end
-            // // --- INT -> FP Conversion (REWRITTEN) ---
-            // else begin
-            //     precision = (output_type == FP_TYPE_FP64) ? 53 : 24;
-            //     final_sign = (input_type == FP_TYPE_INT32) && operand_in[31];
-            //     abs_int_in = final_sign ? -operand_in[31:0] : operand_in[31:0];
-            //     msb_pos = $clog2(abs_int_in);
-            //     msb_index = msb_pos - 1;
-            //     unb_exp_out = msb_index[10:0];
-            //     abs_int_extended = {32'b0, abs_int_in};
-            //     if (msb_pos > precision) begin // Inexact conversion, needs rounding
-            //         shift_amt = msb_pos - precision;
-            //         shifted_val = abs_int_extended << (64 - shift_amt);
-            //         g_bit = shifted_val[63]; r_bit = shifted_val[62]; s_bit = |shifted_val[61:0];
 
-            //         abs_int_extended >>= shift_amt;
-            //         temp_mant = abs_int_extended[53:0];
-            //         lsb = temp_mant[0];
-            //         flag_inexact = g_bit | r_bit | s_bit;
-            //         case(rounding_mode)
-            //             3'b000: round_up = g_bit & (lsb | r_bit | s_bit);
-            //             default: round_up = 0;
-            //         endcase
-            //         temp_mant += {53'b0, round_up};
-            //         if(temp_mant[precision]) begin
-            //             unb_exp_out+=1; temp_mant>>=1;
-            //         end
-            //         frac_mask = (1 << (precision - 1)) - 1;
-            //         frac_part = {10'b0, temp_mant} & frac_mask;
-            //         frac_part <<= (52 - (precision - 1));
-            //         final_mant = frac_part[52:0];
-            //     end else begin // Exact conversion
-            //         frac_mask = (1 << (msb_pos - 1)) - 1;
-            //         frac_part = {32'b0, abs_int_in} & frac_mask;
-            //         shift_amt = 52 - (msb_pos - 1);
-            //         frac_part <<= shift_amt;
-            //         final_mant = frac_part[52:0];
-            //     end
-            //     final_exp_biased = unb_exp_out + ((output_type == FP_TYPE_FP64) ? FP64_BIAS : FP32_BIAS);
-            // end
+            // --- SP -> UINT Conversion ---
+            else if ((input_type == FP_TYPE_FP32) && (output_type == FP_TYPE_UINT32)) begin
+                if (sign_a_dec) begin // negative
+                    result_int = '0;
+                    flag_invalid = 1;
+                end else if (exp_a_dec < 127) begin // 0.xx
+                    result_int = '0;
+                    flag_inexact = |mant_a_dec[23:0];
+                    if (flag_inexact && (rounding_mode == RUP)) begin
+                        result_int = 64'd1;
+                    end
+                end else if (exp_a_dec > 158) begin // over 2^32
+                    flag_invalid = 1;
+                    flag_overflow = 1;
+                    flag_inexact = 1;
+                    result_int = UINT32_MAX_VAL;
+                end else begin
+                    shift_amt = 150 - {24'b0, exp_a_dec}; // 150 = 127 + 23
+                    
+                    if (shift_amt >= 0) begin
+                        result_int = {40'b0, mant_a_dec} >> shift_amt;
+                        shifted_val = {40'b0, mant_a_dec} << (23 - shift_amt);
+                    end else begin
+                        result_int = {40'b0, mant_a_dec} << -shift_amt;
+                        shifted_val = {40'b0, mant_a_dec} >> (shift_amt - 23);
+                    end
+
+                    // rounding
+                    lsb = result_int[0];
+                    g_bit = shifted_val[23];
+                    r_bit = shifted_val[22];
+                    s_bit = |shifted_val[21:0];
+                    flag_inexact = g_bit | r_bit | s_bit;
+                    case (rounding_mode)
+                        3'b000: round_up = g_bit & (lsb | r_bit | s_bit); // RNE
+                        3'b001: round_up = 1'b0; // RTZ
+                        3'b010: round_up = flag_inexact & sign_a_dec; // RDN
+                        3'b011: round_up = flag_inexact & ~sign_a_dec; // RUP
+                        3'b100: round_up = flag_inexact; //RMM
+                        default: round_up = 1'b0;
+                    endcase
+                    result_int += {63'b0, round_up};
+
+                    if (result_int[63:32] != 0) begin
+                        flag_invalid=1; flag_inexact=1; result_int=UINT32_MAX_VAL;
+                    end
+                end
+            end
+
+            // --- SP -> INT Conversion ---
+            else if ((input_type == FP_TYPE_FP32) && (output_type == FP_TYPE_INT32)) begin
+                if (exp_a_dec < 127) begin // 0.xx
+                    result_int = '0;
+                    flag_inexact = |mant_a_dec[23:0];
+                    if (flag_inexact) begin
+                        if (!sign_a_dec && (rounding_mode == RUP)) begin result_int = 64'd1; end // 1
+                        else if (sign_a_dec && (rounding_mode == RDN)) begin result_int = {32'b0, -$signed(32'd1)}; end // -1
+                    end
+                end else if (exp_a_dec >= 158) begin
+                    if (sign_a_dec && (exp_a_dec == 158) && (mant_a_dec == {1'b1, 23'b0})) begin result_int = INT32_MIN_VAL; end
+                    else begin
+                        flag_invalid = 1;
+                        flag_overflow = 1;
+                        flag_inexact = 1;
+                        result_int = (sign_a_dec) ? INT32_MIN_VAL : INT32_MAX_VAL;
+                    end
+                end else begin
+                    shift_amt = 150 - {24'b0, exp_a_dec}; // 150 = 127 + 23
+                    
+                    if (shift_amt >= 0) begin
+                        result_int = {40'b0, mant_a_dec} >> shift_amt;
+                        shifted_val = {40'b0, mant_a_dec} << (23 - shift_amt);
+                    end else begin
+                        result_int = {40'b0, mant_a_dec} << -shift_amt;
+                        shifted_val = {40'b0, mant_a_dec} >> (shift_amt - 23);
+                    end
+
+                    // rounding
+                    lsb = result_int[0];
+                    g_bit = shifted_val[23];
+                    r_bit = shifted_val[22];
+                    s_bit = |shifted_val[21:0];
+                    flag_inexact = g_bit | r_bit | s_bit;
+                    case (rounding_mode)
+                        3'b000: round_up = g_bit & (lsb | r_bit | s_bit); // RNE
+                        3'b001: round_up = 1'b0; // RTZ
+                        3'b010: round_up = flag_inexact & sign_a_dec; // RDN
+                        3'b011: round_up = flag_inexact & ~sign_a_dec; // RUP
+                        3'b100: round_up = flag_inexact; //RMM
+                        default: round_up = 1'b0;
+                    endcase
+                    result_int += {63'b0, round_up};
+
+                    if (result_int[31:0] == {1'b1, 31'b0}) begin
+                        if (sign_a_dec) begin result_int = INT32_MIN_VAL; end
+                        else begin flag_invalid=1; flag_inexact=1; result_int=(sign_a_dec) ? INT32_MIN_VAL : INT32_MAX_VAL; end
+                    end
+
+                    if(sign_a_dec) begin result_int = {32'b0, -$signed(result_int[31:0])}; end
+                end
+            end
+
+            // --- INT -> DP Conversion ---
+            else begin
+                final_sign = (input_type == FP_TYPE_INT32) && operand_in[31];
+                final_exp = 11'd1054; // 2^31
+                result_int = (final_sign) ? {1'b0, -operand_in[31:0], 31'b0} : {1'b0, operand_in[31:0], 31'b0};
+
+                for(int i = 31 ; i >= 0 ; i--) begin
+                    if (!result_int[62]) begin final_exp -= 1; result_int <<= 1; end
+                    else begin i = 0; end
+                end
+
+                lsb = result_int[10];
+                g_bit = result_int[9];
+                r_bit = result_int[8];
+                s_bit = result_int[7];
+                flag_inexact = g_bit | r_bit | s_bit;
+                case (rounding_mode)
+                    3'b000: round_up = g_bit & (lsb | r_bit | s_bit); // RNE
+                    3'b001: round_up = 1'b0; // RTZ
+                    3'b010: round_up = flag_inexact & sign_a_dec; // RDN
+                    3'b011: round_up = flag_inexact & ~sign_a_dec; // RUP
+                    3'b100: round_up = flag_inexact; //RMM
+                    default: round_up = 1'b0;
+                endcase
+                if (round_up) begin result_int += {53'b0, 1'b1, 10'b0}; end
+                if (result_int[63]) begin final_exp += 1; result_int >>= 1; end
+
+                final_mant = result_int[62:10];
+            end
         end
     end
 

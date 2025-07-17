@@ -43,9 +43,9 @@ module FPU_Top (
     localparam OP_FCVT_W_S  = 7'b1100000; // FP32 -> INT32 // UINT32 same
     localparam OP_FCVT_D_W  = 7'b1101001; // INT32 -> FP64 // UINT32 same
     
-    // localparam OP_FCVT_S_D  = 7'b0100000; // FP64 -> FP32
-    // localparam OP_FCVT_W_D  = 7'b1100001; // FP64 -> INT32 // UINT32 same
-    // localparam OP_FCVT_S_W  = 7'b1101000; // INT32 -> FP32 // UINT32 same
+    localparam OP_FCVT_S_D  = 7'b0100000; // FP64 -> FP32
+    localparam OP_FCVT_W_D  = 7'b1100001; // FP64 -> INT32 // UINT32 same
+    localparam OP_FCVT_S_W  = 7'b1101000; // INT32 -> FP32 // UINT32 same
 
 
     // --- Internal Wires for connecting to sub-modules ---
@@ -60,6 +60,9 @@ module FPU_Top (
 
     reg [63:0] sp_convert_result;
     reg sp_convert_invalid, sp_convert_overflow, sp_convert_underflow, sp_convert_inexact;
+
+    reg [31:0] dp_convert_result;
+    reg dp_convert_invalid, dp_convert_overflow, dp_convert_underflow, dp_convert_inexact;
 
     // --- Sub-module control signals ---
     reg [1:0]  convert_input_type;
@@ -108,6 +111,16 @@ module FPU_Top (
         .result(sp_convert_result),
         .flag_invalid(sp_convert_invalid), .flag_overflow(sp_convert_overflow),
         .flag_underflow(sp_convert_underflow), .flag_inexact(sp_convert_inexact)
+    );
+
+    DP_Convert dp_convert_inst (
+        .operand_in(operand_a), 
+        .input_type(convert_input_type),
+        .output_type(convert_output_type),
+        .rounding_mode(func3),
+        .result(dp_convert_result),
+        .flag_invalid(dp_convert_invalid), .flag_overflow(dp_convert_overflow),
+        .flag_underflow(dp_convert_underflow), .flag_inexact(dp_convert_inexact)
     );
 
     // FP_Multiplier multiplier_inst (
@@ -181,6 +194,16 @@ module FPU_Top (
                     OP_FCVT_W_S: begin convert_input_type = FP32; convert_output_type = (rs2[0]) ? UINT32 : INT32; end
                     OP_FCVT_D_W: begin convert_input_type = (rs2[0]) ? UINT32 : INT32; convert_output_type = FP64; end
                     default: begin convert_input_type = FP32; convert_output_type = FP64; end
+                endcase
+            end
+            OP_FCVT_S_D, OP_FCVT_W_D, OP_FCVT_S_W: begin
+                result_out = {32'b0, dp_convert_result};
+                {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {dp_convert_invalid, dp_convert_overflow, dp_convert_underflow, dp_convert_inexact};
+                case (func7)
+                    OP_FCVT_S_D: begin convert_input_type = FP64; convert_output_type = FP32; end
+                    OP_FCVT_W_D: begin convert_input_type = FP64; convert_output_type = (rs2[0]) ? UINT32 : INT32; end
+                    OP_FCVT_S_W: begin convert_input_type = (rs2[0]) ? UINT32 : INT32; convert_output_type = FP32; end
+                    default: begin convert_input_type = FP64; convert_output_type = FP32; end
                 endcase
             end
 
