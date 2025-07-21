@@ -131,10 +131,10 @@ module SP_Convert (
                     
                     if (shift_amt >= 0) begin
                         result_int = {40'b0, mant_a_dec} >> shift_amt;
-                        shifted_val = {40'b0, mant_a_dec} << (23 - shift_amt);
+                        shifted_val = {40'b0, mant_a_dec} << (24 - shift_amt);
                     end else begin
                         result_int = {40'b0, mant_a_dec} << -shift_amt;
-                        shifted_val = {40'b0, mant_a_dec} >> (shift_amt - 23);
+                        shifted_val = {40'b0, mant_a_dec} >> (shift_amt - 24);
                     end
 
                     // rounding
