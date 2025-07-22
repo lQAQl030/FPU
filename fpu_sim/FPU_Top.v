@@ -27,11 +27,11 @@ module FPU_Top (
 
     // --- Opcode Definitions ---
     localparam OP_FADD_S  = 7'b0000000; // FP32 Add
-    localparam OP_FSUB_S  = 7'b0000100; // FP32 Subtract
     localparam OP_FADD_D  = 7'b0000001; // FP64 Add
+    localparam OP_FSUB_S  = 7'b0000100; // FP32 Subtract
     localparam OP_FSUB_D  = 7'b0000101; // FP64 Subtract
-    // localparam OP_FMUL_S  = 7'b0001000; // FP32 Multiply
-    // localparam OP_FMUL_D  = 7'b0001001; // FP64 Multiply
+    localparam OP_FMUL_S  = 7'b0001000; // FP32 Multiply
+    localparam OP_FMUL_D  = 7'b0001001; // FP64 Multiply
     // localparam OP_FDIV_S  = 7'b0001100; // FP32 Divide
     // localparam OP_FDIV_D  = 7'b0001101; // FP64 Divide
     // localparam OP_FSQRT_S = 7'b0101100; // FP32 Square Root
@@ -63,6 +63,12 @@ module FPU_Top (
 
     reg [31:0] dp_convert_result;
     reg dp_convert_invalid, dp_convert_overflow, dp_convert_underflow, dp_convert_inexact;
+
+    reg [31:0] sp_multiplier_result;
+    reg sp_multiplier_invalid, sp_multiplier_overflow, sp_multiplier_underflow, sp_multiplier_inexact;
+
+    reg [63:0] dp_multiplier_result;
+    reg dp_multiplier_invalid, dp_multiplier_overflow, dp_multiplier_underflow, dp_multiplier_inexact;
 
     // --- Sub-module control signals ---
     reg [1:0]  convert_input_type;
@@ -123,15 +129,21 @@ module FPU_Top (
         .flag_underflow(dp_convert_underflow), .flag_inexact(dp_convert_inexact)
     );
 
-    // FP_Multiplier multiplier_inst (
-    //     .clk(clk), .rst_n(rst_n),
-    //     .operand_a(operand_a), .operand_b(operand_b),
-    //     .is_double_precision(is_double),
-    //     .rounding_mode(rounding_mode),
-    //     .result(multiplier_result),
-    //     .flag_invalid(multiplier_invalid), .flag_overflow(multiplier_overflow),
-    //     .flag_underflow(multiplier_underflow), .flag_inexact(multiplier_inexact)
-    // );
+    SP_Multiplier sp_multiplier_inst (
+        .operand_a(operand_a[31:0]), .operand_b(operand_b[31:0]),
+        .rounding_mode(func3),
+        .result(sp_multiplier_result),
+        .flag_invalid(sp_multiplier_invalid), .flag_overflow(sp_multiplier_overflow),
+        .flag_underflow(sp_multiplier_underflow), .flag_inexact(sp_multiplier_inexact)
+    );
+
+    DP_Multiplier dp_multiplier_inst (
+        .operand_a(operand_a), .operand_b(operand_b),
+        .rounding_mode(func3),
+        .result(dp_multiplier_result),
+        .flag_invalid(dp_multiplier_invalid), .flag_overflow(dp_multiplier_overflow),
+        .flag_underflow(dp_multiplier_underflow), .flag_inexact(dp_multiplier_inexact)
+    );
 
     // FP_Divider divider_inst (
     //     .clk(clk), .rst_n(rst_n),
@@ -206,7 +218,14 @@ module FPU_Top (
                     default: begin convert_input_type = FP64; convert_output_type = FP32; end
                 endcase
             end
-
+            OP_FMUL_S: begin
+                result_out = {32'b0, sp_multiplier_result};
+                {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {sp_multiplier_invalid, sp_multiplier_overflow, sp_multiplier_underflow, sp_multiplier_inexact};
+            end
+            OP_FMUL_D: begin
+                result_out = dp_multiplier_result;
+                {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {dp_multiplier_invalid, dp_multiplier_overflow, dp_multiplier_underflow, dp_multiplier_inexact};
+            end
             // OP_FMUL_S, OP_FMUL_D: begin
             //     is_double = opcode[0];
             //     result_out = multiplier_result;

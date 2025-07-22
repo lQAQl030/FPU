@@ -12,16 +12,12 @@ SIM_EXE = V$(TOP_MODULE)
 
 # --- Verilog Source Files ---
 VERILOG_SOURCES = \
-    SP_Encoder.v \
-	DP_Encoder.v \
-    SP_Decoder.v \
-	DP_Decoder.v \
-    SP_Adder.v \
-	DP_Adder.v \
-	SP_Compare.v \
-	DP_Compare.v \
-	SP_Convert.v \
-	DP_Convert.v \
+    SP_Encoder.v DP_Encoder.v \
+    SP_Decoder.v DP_Decoder.v \
+    SP_Adder.v DP_Adder.v \
+	SP_Compare.v DP_Compare.v \
+	SP_Convert.v DP_Convert.v \
+	SP_Multiplier.v DP_Multiplier.v \
     FPU_Top.v
 
 # --- Verilator Flags ---

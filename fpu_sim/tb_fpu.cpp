@@ -207,233 +207,254 @@ int main(int argc, char** argv, char** env) {
     std::vector<TestCase> test_suite = {
         //  { Name },                                        { func7 },   { func3 },  {IntType}, {ResultType}, {OpA},                           {OpB},              {ExpectedResult},       {Invalid, DivByZero, Overflow, Underflow, Inexact,  cmp_result}
 
-        // // --- Adder Tests ---
-        // // SP_Adder
-        //     {"FADD.S: 1.5 + 2.75",                           OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1.5f),              f32_to_u32(2.75f),       f32_to_u32(4.25f),            0,0,0,0,0, 0},
-        //     {"FADD.S: 123.55 + 0.375",                       OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(123.55f),           f32_to_u32(0.375f),      f32_to_u32(123.925f),         0,0,0,0,0, 0},
-        //     {"FSUB.S: 10.0 - 5.5",                           OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(10.0f),             f32_to_u32(5.5f),        f32_to_u32(4.5f),             0,0,0,0,0, 0},
-        //     {"FSUB.S: 1.0 - 0.5625",                         OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1.0f),              f32_to_u32(0.5625f),     f32_to_u32(0.4375f),          0,0,0,0,0, 0},
-
-        //     {"FADD.S: 1.0 + NAN -> Invalid NaN",             OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1.0f),              f32_to_u32(NAN),         f32_to_u32(NAN),              1,0,0,0,0, 0},
-        //     {"FSUB.S: 1.0 - NAN -> Invalid NaN",             OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1.0f),              f32_to_u32(NAN),         f32_to_u32(NAN),              1,0,0,0,0, 0},
-        //     {"FADD.S: NAN + 1.0 -> Invalid NaN",             OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(NAN),               f32_to_u32(1.0f),        f32_to_u32(NAN),              1,0,0,0,0, 0},
-        //     {"FSUB.S: NAN - 1.0 -> Invalid NaN",             OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(NAN),               f32_to_u32(1.0f),        f32_to_u32(NAN),              1,0,0,0,0, 0},
-        //     {"FADD.S: NAN + NAN -> Invalid NaN",             OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(NAN),               f32_to_u32(NAN),         f32_to_u32(NAN),              1,0,0,0,0, 0},
-        //     {"FSUB.S: NAN - NAN -> Invalid NaN",             OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(NAN),               f32_to_u32(NAN),         f32_to_u32(NAN),              1,0,0,0,0, 0},
-        //     {"FADD.S: Inf + 3.0 -> Inf",                     OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(INFINITY),          f32_to_u32(3.0f),        f32_to_u32(INFINITY),         0,0,0,0,0, 0},
-        //     {"FADD.S: 3.0 + Inf -> Inf",                     OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(3.0f),              f32_to_u32(INFINITY),    f32_to_u32(INFINITY),         0,0,0,0,0, 0},
-        //     {"FSUB.S: Inf - 3.0 -> Inf",                     OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(INFINITY),          f32_to_u32(3.0f),        f32_to_u32(INFINITY),         0,0,0,0,0, 0},
-        //     {"FSUB.S: 3.0 - Inf -> Inf",                     OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(3.0f),              f32_to_u32(INFINITY),    f32_to_u32(-INFINITY),        0,0,0,0,0, 0},
-        //     {"FSUB.S: Inf - Inf -> Invalid NaN",             OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(INFINITY),          f32_to_u32(INFINITY),    f32_to_u32(NAN),              1,0,0,0,0, 0},
-        //     {"FADD.S: 2.75 + 0.0",                           OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(2.75f),             f32_to_u32(0.0f),        f32_to_u32(2.75f),            0,0,0,0,0, 0},
-        //     {"FSUB.S: 0.0 - 5.5",                            OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(0.0f),              f32_to_u32(5.5f),        f32_to_u32(-5.5f),            0,0,0,0,0, 0},
-
-        //     {"FADD.S: Min_Normal + Min_Denormal",            OP_FADD_S,      RNE,       CVT_NN,    FP32,    0x00800000,                    0x00000001,              0x00800001,                   0,0,0,0,0, 0}, // Result is min normal + 1
-        //     {"FSUB.S: Min_Normal - Min_Denormal",            OP_FSUB_S,      RNE,       CVT_NN,    FP32,    0x00800000,                    0x00000001,              0x007FFFFF,                   0,0,0,1,0, 0}, // Result is max denormal
-
-        //     {"FADD.S: MAX_FLOAT + MAX_FLOAT -> Overflow",    OP_FADD_S,      RNE,       CVT_NN,    FP32,    0x7F7FFFFF,                    0x7F7FFFFF,              f32_to_u32(INFINITY),         0,0,1,0,1, 0},
-        // // DP_Adder    
-        //     {"FADD.D: 1.5 + 2.75",                           OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(1.5),               f64_to_u64(2.75),        f64_to_u64(4.25),             0,0,0,0,0, 0},
-        //     {"FADD.D: 123.55 + 0.375",                       OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(123.55),            f64_to_u64(0.375),       f64_to_u64(123.925),          0,0,0,0,0, 0},
-        //     {"FSUB.D: 10.0 - 5.5",                           OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(10.0),              f64_to_u64(5.5),         f64_to_u64(4.5),              0,0,0,0,0, 0},
-        //     {"FSUB.D: 1.0 - 0.5625",                         OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(1.0),               f64_to_u64(0.5625),      f64_to_u64(0.4375),           0,0,0,0,0, 0},
-
-        //     {"FADD.D: 1.0 + NAN -> Invalid NaN",             OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(1.0),               f64_to_u64(NAN),         f64_to_u64(NAN),              1,0,0,0,0, 0},
-        //     {"FSUB.D: 1.0 - NAN -> Invalid NaN",             OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(1.0),               f64_to_u64(NAN),         f64_to_u64(NAN),              1,0,0,0,0, 0},
-        //     {"FADD.D: NAN + 1.0 -> Invalid NaN",             OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(NAN),               f64_to_u64(1.0),         f64_to_u64(NAN),              1,0,0,0,0, 0},
-        //     {"FSUB.D: NAN - 1.0 -> Invalid NaN",             OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(NAN),               f64_to_u64(1.0),         f64_to_u64(NAN),              1,0,0,0,0, 0},
-        //     {"FADD.D: NAN + NAN -> Invalid NaN",             OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(NAN),               f64_to_u64(NAN),         f64_to_u64(NAN),              1,0,0,0,0, 0},
-        //     {"FSUB.D: NAN - NAN -> Invalid NaN",             OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(NAN),               f64_to_u64(NAN),         f64_to_u64(NAN),              1,0,0,0,0, 0},
-        //     {"FADD.D: Inf + 3.0 -> Inf",                     OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(INFINITY),          f64_to_u64(3.0),         f64_to_u64(INFINITY),         0,0,0,0,0, 0},
-        //     {"FADD.D: 3.0 + Inf -> Inf",                     OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(3.0),               f64_to_u64(INFINITY),    f64_to_u64(INFINITY),         0,0,0,0,0, 0},
-        //     {"FSUB.D: Inf - 3.0 -> Inf",                     OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(INFINITY),          f64_to_u64(3.0),         f64_to_u64(INFINITY),         0,0,0,0,0, 0},
-        //     {"FSUB.D: 3.0 - Inf -> Inf",                     OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(3.0),               f64_to_u64(INFINITY),    f64_to_u64(-INFINITY),        0,0,0,0,0, 0},
-        //     {"FSUB.D: Inf - Inf -> Invalid NaN",             OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(INFINITY),          f64_to_u64(INFINITY),    f64_to_u64(NAN),              1,0,0,0,0, 0},
-        //     {"FADD.D: 2.75 + 0.0",                           OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(2.75),              f64_to_u64(0.0),         f64_to_u64(2.75),             0,0,0,0,0, 0},
-        //     {"FSUB.D: 0.0 - 5.5",                            OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(0.0),               f64_to_u64(5.5),         f64_to_u64(-5.5),             0,0,0,0,0, 0},
-
-        //     {"FADD.D: Min_Normal + Min_Denormal",            OP_FADD_D,      RNE,       CVT_NN,    FP64,    0x0010000000000000,            0x0000000000000001,      0x0010000000000001,           0,0,0,0,0, 0}, // Result is min normal + 1
-        //     {"FSUB.D: Min_Normal - Min_Denormal",            OP_FSUB_D,      RNE,       CVT_NN,    FP64,    0x0010000000000000,            0x0000000000000001,      0x000FFFFFFFFFFFFF,           0,0,0,1,0, 0}, // Result is max denormal
-
-        //     {"FADD.D: MAX_FLOAT + MAX_FLOAT -> Overflow",    OP_FADD_D,      RNE,       CVT_NN,    FP64,    0x7FEFFFFFFFFFFFFF,            0x7FEFFFFFFFFFFFFF,      f64_to_u64(INFINITY),         0,0,1,0,1, 0},
-
-        // // --- Compare Tests ---
-        // // SP_Compare
-        //     {"FCMP.S: -2.0 < -1.0",                          OP_FCMP_S,      CMP_LT,    CVT_NN,    CMP,     f32_to_u32(-2.0f),             f32_to_u32(-1.0f),       0,                            0,0,0,0,0, 1},
-        //     {"FCMP.S: 2.0 = 2.0",                            OP_FCMP_S,      CMP_EQ,    CVT_NN,    CMP,     f32_to_u32(2.0f),              f32_to_u32(2.0f),        0,                            0,0,0,0,0, 1},
-        //     {"FCMP.S: 1.0 <= 2.0",                           OP_FCMP_S,      CMP_LE,    CVT_NN,    CMP,     f32_to_u32(1.0f),              f32_to_u32(2.0f),        0,                            0,0,0,0,0, 1},
-        //     {"FCMP.S: 0.0 < -1.0",                           OP_FCMP_S,      CMP_LT,    CVT_NN,    CMP,     f32_to_u32(0.0f),              f32_to_u32(-1.0f),       0,                            0,0,0,0,0, 0},
-        //     {"FCMP.S: 3.0 = 2.0",                            OP_FCMP_S,      CMP_EQ,    CVT_NN,    CMP,     f32_to_u32(3.0f),              f32_to_u32(2.0f),        0,                            0,0,0,0,0, 0},
-        //     {"FCMP.S: 2.0 <= 1.0",                           OP_FCMP_S,      CMP_LE,    CVT_NN,    CMP,     f32_to_u32(2.0f),              f32_to_u32(1.0f),        0,                            0,0,0,0,0, 0},
-        //     {"FCMP.S: +0 = -0",                              OP_FCMP_S,      CMP_EQ,    CVT_NN,    CMP,     f32_to_u32(0.0f),              f32_to_u32(-0.0f),       0,                            0,0,0,0,0, 1},
-        //     {"FCMP.S: NaN = 2.0",                            OP_FCMP_S,      CMP_EQ,    CVT_NN,    CMP,     f32_to_u32(NAN),               f32_to_u32(2.0f),        0,                            0,0,0,0,0, 0},
-        //     {"FCMP.S: SNaN = 2.0",                           OP_FCMP_S,      CMP_EQ,    CVT_NN,    CMP,     0x7f800001,                    f32_to_u32(2.0f),        0,                            1,0,0,0,0, 0},
-        //     {"FCMP.S: Normal <= Denormal",                   OP_FCMP_S,      CMP_LE,    CVT_NN,    CMP,     0x00800000,                    0x00000001,              0,                            0,0,0,0,0, 0},
-        //     {"FCMP.S: Denormal <= Normal",                   OP_FCMP_S,      CMP_LE,    CVT_NN,    CMP,     0x00000001,                    0x00800000,              0,                            0,0,0,0,0, 1},
-        // // DP_Compare
-        //     {"FCMP.D: -2.0 < -1.0",                          OP_FCMP_D,      CMP_LT,    CVT_NN,    CMP,     f64_to_u64(-2.0),              f64_to_u64(-1.0),        0,                            0,0,0,0,0, 1},
-        //     {"FCMP.D: 2.0 = 2.0",                            OP_FCMP_D,      CMP_EQ,    CVT_NN,    CMP,     f64_to_u64(2.0),               f64_to_u64(2.0),         0,                            0,0,0,0,0, 1},
-        //     {"FCMP.D: 1.0 <= 2.0",                           OP_FCMP_D,      CMP_LE,    CVT_NN,    CMP,     f64_to_u64(1.0),               f64_to_u64(2.0),         0,                            0,0,0,0,0, 1},
-        //     {"FCMP.D: 0.0 < -1.0",                           OP_FCMP_D,      CMP_LT,    CVT_NN,    CMP,     f64_to_u64(0.0),               f64_to_u64(-1.0),        0,                            0,0,0,0,0, 0},
-        //     {"FCMP.D: 3.0 = 2.0",                            OP_FCMP_D,      CMP_EQ,    CVT_NN,    CMP,     f64_to_u64(3.0),               f64_to_u64(2.0),         0,                            0,0,0,0,0, 0},
-        //     {"FCMP.D: 2.0 <= 1.0",                           OP_FCMP_D,      CMP_LE,    CVT_NN,    CMP,     f64_to_u64(2.0),               f64_to_u64(1.0),         0,                            0,0,0,0,0, 0},
-        //     {"FCMP.D: +0 = -0",                              OP_FCMP_D,      CMP_EQ,    CVT_NN,    CMP,     f64_to_u64(0.0),               f64_to_u64(-0.0),        0,                            0,0,0,0,0, 1},
-        //     {"FCMP.D: NaN = 2.0",                            OP_FCMP_D,      CMP_EQ,    CVT_NN,    CMP,     f64_to_u64(NAN),               f64_to_u64(2.0),         0,                            0,0,0,0,0, 0},
-        //     {"FCMP.D: SNaN = 2.0",                           OP_FCMP_D,      CMP_EQ,    CVT_NN,    CMP,     0xfff0000000000001,            f64_to_u64(2.0),         0,                            1,0,0,0,0, 0},
-        //     {"FCMP.D: Normal <= Denormal",                   OP_FCMP_D,      CMP_LE,    CVT_NN,    CMP,     0x0010000000000000,            0x0000000000000001,      0,                            0,0,0,0,0, 0},
-        //     {"FCMP.D: Denormal <= Normal",                   OP_FCMP_D,      CMP_LE,    CVT_NN,    CMP,     0x0000000000000001,            0x0010000000000000,      0,                            0,0,0,0,0, 1},
-
-        // // --- Conversion Tests ---
-        // SP_Convert
-            {"FCVT.D.S: NaN -> NaN",                         OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    f32_to_u32(NAN),               0,                       f64_to_u64(NAN),              1,0,0,0,0, 0},
-            {"FCVT.D.S: Inf -> Inf",                         OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    f32_to_u32(INFINITY),          0,                       f64_to_u64(INFINITY),         0,0,0,0,0, 0},
-            {"FCVT.WU.S: NaN -> Max uint",                   OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(NAN),               0,                       4294967295U,                  1,0,0,0,0, 0},
-            {"FCVT.WU.S: Inf -> Max uint",                   OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(INFINITY),          0,                       4294967295U,                  1,0,1,0,0, 0},
-            {"FCVT.WU.S: -Inf -> 0",                         OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(-INFINITY),         0,                       0U,                           1,0,0,0,0, 0},
-            {"FCVT.W.S: NaN -> Max uint",                    OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(NAN),               0,                       i32_to_u32(INT32_MIN),        1,0,0,0,0, 0},
-            {"FCVT.W.S: Inf -> Max uint",                    OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(INFINITY),          0,                       i32_to_u32(INT32_MAX),        1,0,1,0,0, 0},
-            {"FCVT.W.S: -Inf -> 0",                          OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(-INFINITY),         0,                       i32_to_u32(INT32_MIN),        1,0,1,0,0, 0},
-
-            {"FCVT.D.S: float(0.0) -> double",               OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    f32_to_u32(0.0f),              0,                       f64_to_u64(0.0),              0,0,0,0,0, 0},
-            {"FCVT.D.S: float(3.75) -> double",              OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    f32_to_u32(3.75f),             0,                       f64_to_u64(3.75),             0,0,0,0,0, 0},
-            {"FCVT.D.S: float(-3.75) -> double",             OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    f32_to_u32(-3.75f),            0,                       f64_to_u64(-3.75),            0,0,0,0,0, 0},
-            {"FCVT.D.S: Max float -> double",                OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    0x7f7fffff,                    0,                       0x47EFFFFFE0000000,           0,0,0,0,0, 0},
-            {"FCVT.D.S: Min Denormal -> double",             OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    0x00000001,                    0,                       0x36A0000000000000,           0,0,0,0,0, 0},
-
-            {"FCVT.WU.S: float(0.0) -> uint",                OP_FCVT_W_S,    RUP,       CVT_WU,    UINT,    f32_to_u32(0.0f),              0,                       0U,                           0,0,0,0,0, 0},
-            {"FCVT.WU.S: float(0.75) -> uint",               OP_FCVT_W_S,    RUP,       CVT_WU,    UINT,    f32_to_u32(0.75f),             0,                       1U,                           0,0,0,0,1, 0},
-            {"FCVT.WU.S: float(2.0) -> uint",                OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(2.0f),              0,                       2U,                           0,0,0,0,0, 0},
-            {"FCVT.WU.S: float(3.75) -> uint",               OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(3.75f),             0,                       4U,                           0,0,0,0,1, 0},
-            {"FCVT.WU.S: float(-3.75) -> uint",              OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(-3.75f),            0,                       0U,                           1,0,0,0,0, 0},
-            {"FCVT.WU.S: float(31457280.0) -> uint",         OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(31457280.0f),       0,                       31457280U,                    0,0,0,0,0, 0},
-            {"FCVT.WU.S: float(2.1) -> uint (RNE)",          OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(2.1f),              0,                       2U,                           0,0,0,0,1, 0},
-            {"FCVT.WU.S: float(2.1) -> uint (RTZ)",          OP_FCVT_W_S,    RTZ,       CVT_WU,    UINT,    f32_to_u32(2.1f),              0,                       2U,                           0,0,0,0,1, 0},
-            {"FCVT.WU.S: float(2.1) -> uint (RUP)",          OP_FCVT_W_S,    RUP,       CVT_WU,    UINT,    f32_to_u32(2.1f),              0,                       3U,                           0,0,0,0,1, 0},
-            {"FCVT.WU.S: float(2.1) -> uint (RDN)",          OP_FCVT_W_S,    RDN,       CVT_WU,    UINT,    f32_to_u32(2.1f),              0,                       2U,                           0,0,0,0,1, 0},
-            {"FCVT.WU.S: float(2.1) -> uint (RMM)",          OP_FCVT_W_S,    RMM,       CVT_WU,    UINT,    f32_to_u32(2.1f),              0,                       3U,                           0,0,0,0,1, 0},
-
-            {"FCVT.W.S: float(0.0) -> int",                  OP_FCVT_W_S,    RUP,       CVT_W,     INT,     f32_to_u32(0.0f),              0,                       i32_to_u32(0),                0,0,0,0,0, 0},
-            {"FCVT.W.S: float(0.75) -> int",                 OP_FCVT_W_S,    RUP,       CVT_W,     INT,     f32_to_u32(0.75f),             0,                       i32_to_u32(1),                0,0,0,0,1, 0},
-            {"FCVT.W.S: float(-0.75) -> int",                OP_FCVT_W_S,    RDN,       CVT_W,     INT,     f32_to_u32(-0.75f),            0,                       i32_to_u32(-1),               0,0,0,0,1, 0},
-            {"FCVT.W.S: float(3.75) -> int",                 OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(3.75f),             0,                       i32_to_u32(4),                0,0,0,0,1, 0},
-            {"FCVT.W.S: float(-3.75) -> int",                OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(-3.75f),            0,                       i32_to_u32(-4),               0,0,0,0,1, 0},
-            {"FCVT.W.S: float(31457280.0) -> int",           OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(31457280.0f),       0,                       i32_to_u32(31457280),         0,0,0,0,0, 0},
-            {"FCVT.W.S: float(-31457280.0) -> int",          OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(-31457280.0f),      0,                       i32_to_u32(-31457280),        0,0,0,0,0, 0},
-            {"FCVT.W.S: float(2147483648.0) -> int",         OP_FCVT_W_S,    RUP,       CVT_W,     INT,     f32_to_u32(2147483648.0f),     0,                       i32_to_u32(INT32_MAX),        1,0,1,0,1, 0},
-            {"FCVT.W.S: float(-2147483648.0) -> int",        OP_FCVT_W_S,    RDN,       CVT_W,     INT,     f32_to_u32(-2147483648.0f),    0,                       i32_to_u32(INT32_MIN),        0,0,0,0,0, 0},
-            {"FCVT.W.S: float(2.1) -> int (RNE)",            OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(2.1f),              0,                       i32_to_u32(2),                0,0,0,0,1, 0},
-            {"FCVT.W.S: float(2.1) -> int (RTZ)",            OP_FCVT_W_S,    RTZ,       CVT_W,     INT,     f32_to_u32(2.1f),              0,                       i32_to_u32(2),                0,0,0,0,1, 0},
-            {"FCVT.W.S: float(2.1) -> int (RUP)",            OP_FCVT_W_S,    RUP,       CVT_W,     INT,     f32_to_u32(2.1f),              0,                       i32_to_u32(3),                0,0,0,0,1, 0},
-            {"FCVT.W.S: float(2.1) -> int (RDN)",            OP_FCVT_W_S,    RDN,       CVT_W,     INT,     f32_to_u32(2.1f),              0,                       i32_to_u32(2),                0,0,0,0,1, 0},
-            {"FCVT.W.S: float(2.1) -> int (RMM)",            OP_FCVT_W_S,    RMM,       CVT_W,     INT,     f32_to_u32(2.1f),              0,                       i32_to_u32(3),                0,0,0,0,1, 0},
-            {"FCVT.W.S: float(-2.1) -> int (RNE)",           OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(-2.1f),             0,                       i32_to_u32(-2),               0,0,0,0,1, 0},
-            {"FCVT.W.S: float(-2.1) -> int (RTZ)",           OP_FCVT_W_S,    RTZ,       CVT_W,     INT,     f32_to_u32(-2.1f),             0,                       i32_to_u32(-2),               0,0,0,0,1, 0},
-            {"FCVT.W.S: float(-2.1) -> int (RUP)",           OP_FCVT_W_S,    RUP,       CVT_W,     INT,     f32_to_u32(-2.1f),             0,                       i32_to_u32(-2),               0,0,0,0,1, 0},
-            {"FCVT.W.S: float(-2.1) -> int (RDN)",           OP_FCVT_W_S,    RDN,       CVT_W,     INT,     f32_to_u32(-2.1f),             0,                       i32_to_u32(-3),               0,0,0,0,1, 0},
-            {"FCVT.W.S: float(-2.1) -> int (RMM)",           OP_FCVT_W_S,    RMM,       CVT_W,     INT,     f32_to_u32(-2.1f),             0,                       i32_to_u32(-3),               0,0,0,0,1, 0},
-
-            {"FCVT.D.W: int(0) -> double",                   OP_FCVT_D_W,    RNE,       CVT_W,     FP64,    i32_to_u32(0),                 0,                       f64_to_u64(0.0),              0,0,0,0,0, 0},
-            {"FCVT.D.W: int(3) -> double",                   OP_FCVT_D_W,    RNE,       CVT_W,     FP64,    i32_to_u32(3),                 0,                       f64_to_u64(3.0),              0,0,0,0,0, 0},
-            {"FCVT.D.W: int(-3) -> double",                  OP_FCVT_D_W,    RNE,       CVT_W,     FP64,    i32_to_u32(-3),                0,                       f64_to_u64(-3.0),             0,0,0,0,0, 0},
-            {"FCVT.D.W: int(2147483647) -> double",          OP_FCVT_D_W,    RNE,       CVT_W,     FP64,    i32_to_u32(2147483647),        0,                       f64_to_u64(2147483647.0),     0,0,0,0,0, 0},
-            {"FCVT.D.W: int(-2147483648) -> double",         OP_FCVT_D_W,    RNE,       CVT_W,     FP64,    i32_to_u32(-2147483648),       0,                       f64_to_u64(-2147483648.0),    0,0,0,0,0, 0},
-
-            {"FCVT.D.WU: uint(0) -> double",                 OP_FCVT_D_W,    RNE,       CVT_WU,    FP64,    0U,                            0,                       f64_to_u64(0.0),              0,0,0,0,0, 0},
-            {"FCVT.D.WU: uint(3) -> double",                 OP_FCVT_D_W,    RNE,       CVT_WU,    FP64,    3U,                            0,                       f64_to_u64(3.0),              0,0,0,0,0, 0},
-            {"FCVT.D.WU: uint(2147483647) -> double",        OP_FCVT_D_W,    RNE,       CVT_WU,    FP64,    2147483647U,                   0,                       f64_to_u64(2147483647.0),     0,0,0,0,0, 0},
-            {"FCVT.D.WU: uint(4294967295) -> double",        OP_FCVT_D_W,    RNE,       CVT_WU,    FP64,    4294967295U,                   0,                       f64_to_u64(4294967295.0),     0,0,0,0,0, 0},
-        // DP_Convert
-            {"FCVT.S.D: NaN -> NaN",                         OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(NAN),              0,                        f32_to_u32(NAN),              1,0,0,0,0, 0},
-            {"FCVT.S.D: Inf -> Inf",                         OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(INFINITY),         0,                        f32_to_u32(INFINITY),         0,0,0,0,0, 0},
-            {"FCVT.WU.D: NaN -> Max uint",                   OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(NAN),              0,                        4294967295U,                  1,0,0,0,0, 0},
-            {"FCVT.WU.D: Inf -> Max uint",                   OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(INFINITY),         0,                        4294967295U,                  1,0,1,0,0, 0},
-            {"FCVT.WU.D: -Inf -> 0",                         OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(-INFINITY),        0,                        0U,                           1,0,0,0,0, 0},
-            {"FCVT.W.D: NaN -> Max uint",                    OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(NAN),              0,                        i32_to_u32(INT32_MIN),        1,0,0,0,0, 0},
-            {"FCVT.W.D: Inf -> Max uint",                    OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(INFINITY),         0,                        i32_to_u32(INT32_MAX),        1,0,1,0,0, 0},
-            {"FCVT.W.D: -Inf -> 0",                          OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(-INFINITY),        0,                        i32_to_u32(INT32_MIN),        1,0,1,0,0, 0},
-        
-            {"FCVT.S.D: double(0.0) -> float",               OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(0.0),              0,                        f32_to_u32(0.0f),             0,0,0,0,0, 0},
-            {"FCVT.S.D: double(3.75) -> float",              OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(3.75),             0,                        f32_to_u32(3.75f),            0,0,0,0,0, 0},
-            {"FCVT.S.D: double(-3.75) -> float",             OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(-3.75),            0,                        f32_to_u32(-3.75f),           0,0,0,0,0, 0},
-            {"FCVT.S.D: double(around 2^127) -> float",      OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    0x47EE000000000000,           0,                        0x7f700000,                   0,0,0,0,0, 0},
-            {"FCVT.S.D: double(around -2^127) -> float",     OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    0xC7EE000000000000,           0,                        0xff700000,                   0,0,0,0,0, 0},
-            {"FCVT.S.D: double(max float) -> float",         OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    0x47EFFFFFE0000000,           0,                        0x7f7fffff,                   0,0,0,0,0, 0},
-            {"FCVT.S.D: double(min float) -> float",         OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    0xC7EFFFFFE0000000,           0,                        0xff7fffff,                   0,0,0,0,0, 0},
-            {"FCVT.S.D: double(2e115) -> Inf",               OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(2e115),            0,                        f32_to_u32(INFINITY),         1,0,1,0,0, 0},
-            {"FCVT.S.D: double(-2e115) -> -Inf",             OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(-2e115),           0,                        f32_to_u32(-INFINITY),        1,0,1,0,0, 0},
-            {"FCVT.S.D: double(max denormal) -> float",      OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    0x3800000000000000,           0,                        0x00400000,                   0,0,0,0,0, 0},
-            {"FCVT.S.D: double(min denormal) -> float",      OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    0x36A0000000000000,           0,                        0x00000001,                   0,0,0,0,0, 0},
-
-            {"FCVT.WU.D: double(0.0) -> uint",               OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(0.0),              0,                        0U,                           0,0,0,0,0, 0},
-            {"FCVT.WU.D: double(0.75) -> uint",              OP_FCVT_W_D,    RUP,       CVT_WU,    UINT,    f64_to_u64(0.75),             0,                        1U,                           0,0,0,0,1, 0},
-            {"FCVT.WU.D: double(-0.75) -> uint",             OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(-0.75),            0,                        0U,                           1,0,0,0,0, 0},
-            {"FCVT.WU.D: double(3.75) -> uint",              OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(3.75),             0,                        4U,                           0,0,0,0,1, 0},
-            {"FCVT.WU.D: double(-3.75) -> uint",             OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(-3.75),            0,                        0U,                           1,0,0,0,0, 0},
-            {"FCVT.WU.D: double(31457280.0) -> uint",        OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(31457280.0),       0,                        31457280U,                    0,0,0,0,0, 0},
-            {"FCVT.WU.D: double(-31457280.0) -> uint",       OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(-31457280.0),      0,                        0U,                           1,0,0,0,0, 0},
-            {"FCVT.WU.D: double(4294967295.0) -> uint",      OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    0x41EFFFFFFFE00000,           0,                        4294967295U,                  0,0,0,0,0, 0},
-            {"FCVT.WU.D: double(2.1) -> uint (RNE)",         OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(2.1),              0,                        2U,                           0,0,0,0,1, 0},
-            {"FCVT.WU.D: double(2.1) -> uint (RTZ)",         OP_FCVT_W_D,    RTZ,       CVT_WU,    UINT,    f64_to_u64(2.1),              0,                        2U,                           0,0,0,0,1, 0},
-            {"FCVT.WU.D: double(2.1) -> uint (RUP)",         OP_FCVT_W_D,    RUP,       CVT_WU,    UINT,    f64_to_u64(2.1),              0,                        3U,                           0,0,0,0,1, 0},
-            {"FCVT.WU.D: double(2.1) -> uint (RDN)",         OP_FCVT_W_D,    RDN,       CVT_WU,    UINT,    f64_to_u64(2.1),              0,                        2U,                           0,0,0,0,1, 0},
-            {"FCVT.WU.D: double(2.1) -> uint (RMM)",         OP_FCVT_W_D,    RMM,       CVT_WU,    UINT,    f64_to_u64(2.1),              0,                        3U,                           0,0,0,0,1, 0},
-
-            {"FCVT.W.D: double(0.0) -> int",                 OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(0.0),              0,                        0U,                           0,0,0,0,0, 0},
-            {"FCVT.W.D: double(0.75) -> int",                OP_FCVT_W_D,    RUP,       CVT_W,     INT,     f64_to_u64(0.75),             0,                        1U,                           0,0,0,0,1, 0},
-            {"FCVT.W.D: double(-0.75) -> int",               OP_FCVT_W_D,    RDN,       CVT_W,     INT,     f64_to_u64(-0.75),            0,                        -1U,                          0,0,0,0,1, 0},
-            {"FCVT.W.D: double(3.75) -> int",                OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(3.75),             0,                        4U,                           0,0,0,0,1, 0},
-            {"FCVT.W.D: double(-3.75) -> int",               OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(-3.75),            0,                        -4U,                          0,0,0,0,1, 0},
-            {"FCVT.W.D: double(31457280.0) -> int",          OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(31457280.0),       0,                        31457280U,                    0,0,0,0,0, 0},
-            {"FCVT.W.D: double(-31457280.0) -> int",         OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(-31457280.0),      0,                        -31457280U,                   0,0,0,0,0, 0},
-            {"FCVT.W.D: double(2147483647.0) -> int",        OP_FCVT_W_D,    RNE,       CVT_W,     INT,     0x41DFFFFFFFC00000,           0,                        2147483647U,                  0,0,0,0,0, 0},
-            {"FCVT.W.D: double(-2147483648.0) -> int",       OP_FCVT_W_D,    RNE,       CVT_W,     INT,     0xC1E0000000000000,           0,                        -2147483648U,                 0,0,0,0,0, 0},
-            {"FCVT.W.D: double(2.1) -> int (RNE)",           OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(2.1),              0,                        2U,                           0,0,0,0,1, 0},
-            {"FCVT.W.D: double(2.1) -> int (RTZ)",           OP_FCVT_W_D,    RTZ,       CVT_W,     INT,     f64_to_u64(2.1),              0,                        2U,                           0,0,0,0,1, 0},
-            {"FCVT.W.D: double(2.1) -> int (RUP)",           OP_FCVT_W_D,    RUP,       CVT_W,     INT,     f64_to_u64(2.1),              0,                        3U,                           0,0,0,0,1, 0},
-            {"FCVT.W.D: double(2.1) -> int (RDN)",           OP_FCVT_W_D,    RDN,       CVT_W,     INT,     f64_to_u64(2.1),              0,                        2U,                           0,0,0,0,1, 0},
-            {"FCVT.W.D: double(2.1) -> int (RMM)",           OP_FCVT_W_D,    RMM,       CVT_W,     INT,     f64_to_u64(2.1),              0,                        3U,                           0,0,0,0,1, 0},
-
-            {"FCVT.S.W: int(0) -> float",                    OP_FCVT_S_W,    RNE,       CVT_W,     FP32,    i32_to_u32(0),                 0,                       f32_to_u32(0.0),              0,0,0,0,0, 0},
-            {"FCVT.S.W: int(3) -> float",                    OP_FCVT_S_W,    RNE,       CVT_W,     FP32,    i32_to_u32(3),                 0,                       f32_to_u32(3.0),              0,0,0,0,0, 0},
-            {"FCVT.S.W: int(-3) -> float",                   OP_FCVT_S_W,    RNE,       CVT_W,     FP32,    i32_to_u32(-3),                0,                       f32_to_u32(-3.0),             0,0,0,0,0, 0},
-            {"FCVT.S.W: int(2147483647) -> float",           OP_FCVT_S_W,    RNE,       CVT_W,     FP32,    i32_to_u32(2147483647),        0,                       f32_to_u32(2147483648.0),     0,0,0,0,1, 0},
-            {"FCVT.S.W: int(-2147483648) -> float",          OP_FCVT_S_W,    RNE,       CVT_W,     FP32,    i32_to_u32(-2147483648),       0,                       f32_to_u32(-2147483648.0),    0,0,0,0,0, 0},
-
-            {"FCVT.S.WU: uint(0) -> float",                  OP_FCVT_S_W,    RNE,       CVT_WU,    FP32,    0U,                            0,                       f32_to_u32(0.0),              0,0,0,0,0, 0},
-            {"FCVT.S.WU: uint(3) -> float",                  OP_FCVT_S_W,    RNE,       CVT_WU,    FP32,    3U,                            0,                       f32_to_u32(3.0),              0,0,0,0,0, 0},
-            {"FCVT.S.WU: uint(2147483647) -> float",         OP_FCVT_S_W,    RNE,       CVT_WU,    FP32,    2147483647U,                   0,                       f32_to_u32(2147483648.0),     0,0,0,0,1, 0},
-            {"FCVT.S.WU: uint(4294967295) -> float",         OP_FCVT_S_W,    RNE,       CVT_WU,    FP32,    4294967295U,                   0,                       f32_to_u32(4294967296.0),     0,0,0,0,1, 0},
-        
-        // {"FMUL.D: 3.0 * 2.5",            OP_FMUL_D,  FP64, f64_to_u64(3.0),     f64_to_u64(2.5),     0, f64_to_u64(7.5),      0,0,0,0,0, 0,0,0,0},
-        // {"FDIV.S: 100.0 / 4.0",          OP_FDIV_S,  FP32, f32_to_u32(100.0f),  f32_to_u32(4.0f),    0, f32_to_u32(25.0f),    0,0,0,0,0, 0,0,0,0},
-        // {"FDIV.S: 4.0 / 10.0",           OP_FDIV_S,  FP32, f32_to_u32(4.0f),    f32_to_u32(10.0f),   0, f32_to_u32(0.4f),     0,0,0,0,1, 0,0,0,0},
-        // {"FDIV.D: 90.0 / 4.0",           OP_FDIV_D,  FP32, f64_to_u64(90.0),    f64_to_u64(4.0),     0, f64_to_u64(22.5),     0,0,0,0,0, 0,0,0,0},
-        // {"FDIV.D: 4.0 / 10.0",           OP_FDIV_D,  FP64, f64_to_u64(4.0),     f64_to_u64(10.0),    0, f64_to_u64(0.4),      0,0,0,0,1, 0,0,0,0},
-        // {"FSQRT.D: sqrt(16.0)",          OP_FSQRT_D, FP64, f64_to_u64(16.0),    0,                   0, f64_to_u64(4.0),      0,0,0,0,0, 0,0,0,0},
-
-        // --- Rounding Mode Tests (using 1/3 which is inexact) ---
-        // {"FDIV.D: 1.0/3.0 (RNE)",        OP_FDIV_D,  FP64, f64_to_u64(1.0),     f64_to_u64(3.0),     0, 0x3FD5555555555555,   0,0,0,0,1, 0,0,0,0}, // RNE
-        // {"FDIV.D: 1.0/3.0 (RTZ)",        OP_FDIV_D,  FP64, f64_to_u64(1.0),     f64_to_u64(3.0),     1, 0x3FD5555555555555,   0,0,0,0,1, 0,0,0,0}, // RTZ
-        // {"FDIV.D: 1.0/3.0 (RDN)",        OP_FDIV_D,  FP64, f64_to_u64(1.0),     f64_to_u64(3.0),     2, 0x3FD5555555555555,   0,0,0,0,1, 0,0,0,0}, // RDN
-        // {"FDIV.D: 1.0/3.0 (RUP)",        OP_FDIV_D,  FP64, f64_to_u64(1.0),     f64_to_u64(3.0),     3, 0x3FD5555555555556,   0,0,0,0,1, 0,0,0,0}, // RUP
-        // {"FDIV.D: -1.0/3.0 (RDN)",       OP_FDIV_D,  FP64, f64_to_u64(-1.0),    f64_to_u64(3.0),     2, 0xBFD5555555555556,   0,0,0,0,1, 0,0,0,0}, // RDN (towards -inf)
-        // {"FDIV.D: -1.0/3.0 (RUP)",       OP_FDIV_D,  FP64, f64_to_u64(-1.0),    f64_to_u64(3.0),     3, 0xBFD5555555555555,   0,0,0,0,1, 0,0,0,0}, // RUP (towards +inf)
-
-        // --- Special Value Tests (Zero, Inf, NaN) ---
-        // {"FSQRT.D: sqrt(-1.0) -> Invalid QNaN", OP_FSQRT_D, FP64, f64_to_u64(-1.0), 0,               0, f64_to_u64(NAN),   1,0,0,0,0, 0,0,0,0},
-        // {"FDIV.S by Zero -> Infinity",   OP_FDIV_S,  FP32, f32_to_u32(5.0f),    f32_to_u32(0.0f),    0, f32_to_u32(INFINITY),   0,1,1,0,0, 0,0,0,0},
-        // {"0 / 0 -> Invalid NaN  (32)",   OP_FDIV_S,  FP32, f32_to_u32(0.0f),    f32_to_u32(0.0f),    0, f32_to_u32(NAN),   1,0,0,0,0, 0,0,0,0},
-        // {"0 / 0 -> Invalid QNaN (64)",   OP_FDIV_D,  FP64, f64_to_u64(0.0),     f64_to_u64(0.0),     0, f64_to_u64(NAN),   1,0,0,0,0, 0,0,0,0},
-        // {"Inf / Inf -> Invalid QNaN",    OP_FDIV_D,  FP64, f64_to_u64(INFINITY),f64_to_u64(INFINITY),0, f64_to_u64(NAN),   1,0,0,0,0, 0,0,0,0},
-        // {"0 * Inf -> Invalid QNaN",      OP_FMUL_D,  FP64, f64_to_u64(0.0),     f64_to_u64(INFINITY),0, f64_to_u64(NAN),   1,0,0,0,0, 0,0,0,0},
-
-        // --- Denormal and Underflow Tests ---
-        // {"FMUL.S: Min_Normal * 0.5 -> Underflow", OP_FMUL_S, FP32, 0x00800000, f32_to_u32(0.5f), 0, 0x00400000, 0,0,0,1,0, 0,0,0,0}, // Underflow flag set, result is denormal
-        // {"FMUL.S: Min_Denormal * 0.5 -> Flush to Zero", OP_FMUL_S, FP32, 0x00000001, f32_to_u32(0.5f), 0, 0x0, 0,0,0,1,1, 0,0,0,0}, // Underflow and Inexact
-
-        // --- Overflow Tests ---
-        // {"FMUL.D: MAX_FLOAT * 2.0 -> Overflow", OP_FMUL_D, FP64, 0x7FEFFFFFFFFFFFFF, f64_to_u64(2.0), 0, 0x7FF0000000000000, 0,0,1,0,1, 0,0,0,0},
-        // {"FCVT.S.W: INT_MAX to FP32", OP_FCVT_S_W, FP32, 0x7FFFFFFF, 0, 0, 0x4f000000, 0,0,0,0,1, 0,0,0,0}, // 2147483647 -> 2.14748365E9 (inexact)
+        // --- Adder Tests ---
+        // SP_Adder
+            {"FADD.S: 1.5 + 2.75",                           OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1.5f),                  f32_to_u32(2.75f),                f32_to_u32(4.25f),                0,0,0,0,0, 0},
+            {"FADD.S: 123.55 + 0.375",                       OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(123.55f),               f32_to_u32(0.375f),               f32_to_u32(123.925f),             0,0,0,0,0, 0},
+            {"FSUB.S: 10.0 - 5.5",                           OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(10.0f),                 f32_to_u32(5.5f),                 f32_to_u32(4.5f),                 0,0,0,0,0, 0},
+            {"FSUB.S: 1.0 - 0.5625",                         OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1.0f),                  f32_to_u32(0.5625f),              f32_to_u32(0.4375f),              0,0,0,0,0, 0},
+    
+            {"FADD.S: 1.0 + NAN -> Invalid NaN",             OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1.0f),                  f32_to_u32(NAN),                  f32_to_u32(NAN),                  1,0,0,0,0, 0},
+            {"FSUB.S: 1.0 - NAN -> Invalid NaN",             OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1.0f),                  f32_to_u32(NAN),                  f32_to_u32(NAN),                  1,0,0,0,0, 0},
+            {"FADD.S: NAN + 1.0 -> Invalid NaN",             OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(NAN),                   f32_to_u32(1.0f),                 f32_to_u32(NAN),                  1,0,0,0,0, 0},
+            {"FSUB.S: NAN - 1.0 -> Invalid NaN",             OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(NAN),                   f32_to_u32(1.0f),                 f32_to_u32(NAN),                  1,0,0,0,0, 0},
+            {"FADD.S: NAN + NAN -> Invalid NaN",             OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(NAN),                   f32_to_u32(NAN),                  f32_to_u32(NAN),                  1,0,0,0,0, 0},
+            {"FSUB.S: NAN - NAN -> Invalid NaN",             OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(NAN),                   f32_to_u32(NAN),                  f32_to_u32(NAN),                  1,0,0,0,0, 0},
+            {"FADD.S: Inf + 3.0 -> Inf",                     OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(INFINITY),              f32_to_u32(3.0f),                 f32_to_u32(INFINITY),             0,0,0,0,0, 0},
+            {"FADD.S: 3.0 + Inf -> Inf",                     OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(3.0f),                  f32_to_u32(INFINITY),             f32_to_u32(INFINITY),             0,0,0,0,0, 0},
+            {"FSUB.S: Inf - 3.0 -> Inf",                     OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(INFINITY),              f32_to_u32(3.0f),                 f32_to_u32(INFINITY),             0,0,0,0,0, 0},
+            {"FSUB.S: 3.0 - Inf -> Inf",                     OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(3.0f),                  f32_to_u32(INFINITY),             f32_to_u32(-INFINITY),            0,0,0,0,0, 0},
+            {"FSUB.S: Inf - Inf -> Invalid NaN",             OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(INFINITY),              f32_to_u32(INFINITY),             f32_to_u32(NAN),                  1,0,0,0,0, 0},
+            {"FADD.S: 2.75 + 0.0",                           OP_FADD_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(2.75f),                 f32_to_u32(0.0f),                 f32_to_u32(2.75f),                0,0,0,0,0, 0},
+            {"FSUB.S: 0.0 - 5.5",                            OP_FSUB_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(0.0f),                  f32_to_u32(5.5f),                 f32_to_u32(-5.5f),                0,0,0,0,0, 0},
+    
+            {"FADD.S: Min_Normal + Min_Denormal",            OP_FADD_S,      RNE,       CVT_NN,    FP32,    0x00800000,                        0x00000001,                       0x00800001,                       0,0,0,0,0, 0}, // Result is min normal + 1
+            {"FSUB.S: Min_Normal - Min_Denormal",            OP_FSUB_S,      RNE,       CVT_NN,    FP32,    0x00800000,                        0x00000001,                       0x007FFFFF,                       0,0,0,1,0, 0}, // Result is max denormal
+    
+            {"FADD.S: MAX_FLOAT + MAX_FLOAT -> Overflow",    OP_FADD_S,      RNE,       CVT_NN,    FP32,    0x7F7FFFFF,                        0x7F7FFFFF,                       f32_to_u32(INFINITY),             0,0,1,0,1, 0},
+        // DP_Adder        
+            {"FADD.D: 1.5 + 2.75",                           OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(1.5),                   f64_to_u64(2.75),                 f64_to_u64(4.25),                 0,0,0,0,0, 0},
+            {"FADD.D: 123.55 + 0.375",                       OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(123.55),                f64_to_u64(0.375),                f64_to_u64(123.925),              0,0,0,0,0, 0},
+            {"FSUB.D: 10.0 - 5.5",                           OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(10.0),                  f64_to_u64(5.5),                  f64_to_u64(4.5),                  0,0,0,0,0, 0},
+            {"FSUB.D: 1.0 - 0.5625",                         OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(1.0),                   f64_to_u64(0.5625),               f64_to_u64(0.4375),               0,0,0,0,0, 0},
+    
+            {"FADD.D: 1.0 + NAN -> Invalid NaN",             OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(1.0),                   f64_to_u64(NAN),                  f64_to_u64(NAN),                  1,0,0,0,0, 0},
+            {"FSUB.D: 1.0 - NAN -> Invalid NaN",             OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(1.0),                   f64_to_u64(NAN),                  f64_to_u64(NAN),                  1,0,0,0,0, 0},
+            {"FADD.D: NAN + 1.0 -> Invalid NaN",             OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(NAN),                   f64_to_u64(1.0),                  f64_to_u64(NAN),                  1,0,0,0,0, 0},
+            {"FSUB.D: NAN - 1.0 -> Invalid NaN",             OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(NAN),                   f64_to_u64(1.0),                  f64_to_u64(NAN),                  1,0,0,0,0, 0},
+            {"FADD.D: NAN + NAN -> Invalid NaN",             OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(NAN),                   f64_to_u64(NAN),                  f64_to_u64(NAN),                  1,0,0,0,0, 0},
+            {"FSUB.D: NAN - NAN -> Invalid NaN",             OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(NAN),                   f64_to_u64(NAN),                  f64_to_u64(NAN),                  1,0,0,0,0, 0},
+            {"FADD.D: Inf + 3.0 -> Inf",                     OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(INFINITY),              f64_to_u64(3.0),                  f64_to_u64(INFINITY),             0,0,0,0,0, 0},
+            {"FADD.D: 3.0 + Inf -> Inf",                     OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(3.0),                   f64_to_u64(INFINITY),             f64_to_u64(INFINITY),             0,0,0,0,0, 0},
+            {"FSUB.D: Inf - 3.0 -> Inf",                     OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(INFINITY),              f64_to_u64(3.0),                  f64_to_u64(INFINITY),             0,0,0,0,0, 0},
+            {"FSUB.D: 3.0 - Inf -> Inf",                     OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(3.0),                   f64_to_u64(INFINITY),             f64_to_u64(-INFINITY),            0,0,0,0,0, 0},
+            {"FSUB.D: Inf - Inf -> Invalid NaN",             OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(INFINITY),              f64_to_u64(INFINITY),             f64_to_u64(NAN),                  1,0,0,0,0, 0},
+            {"FADD.D: 2.75 + 0.0",                           OP_FADD_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(2.75),                  f64_to_u64(0.0),                  f64_to_u64(2.75),                 0,0,0,0,0, 0},
+            {"FSUB.D: 0.0 - 5.5",                            OP_FSUB_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(0.0),                   f64_to_u64(5.5),                  f64_to_u64(-5.5),                 0,0,0,0,0, 0},
+    
+            {"FADD.D: Min_Normal + Min_Denormal",            OP_FADD_D,      RNE,       CVT_NN,    FP64,    0x0010000000000000,                0x0000000000000001,               0x0010000000000001,               0,0,0,0,0, 0}, // Result is min normal + 1
+            {"FSUB.D: Min_Normal - Min_Denormal",            OP_FSUB_D,      RNE,       CVT_NN,    FP64,    0x0010000000000000,                0x0000000000000001,               0x000FFFFFFFFFFFFF,               0,0,0,1,0, 0}, // Result is max denormal
+    
+            {"FADD.D: MAX_FLOAT + MAX_FLOAT -> Overflow",    OP_FADD_D,      RNE,       CVT_NN,    FP64,    0x7FEFFFFFFFFFFFFF,                0x7FEFFFFFFFFFFFFF,               f64_to_u64(INFINITY),             0,0,1,0,1, 0},
+    
+        // --- Compare Tests ---    
+        // SP_Compare    
+            {"FCMP.S: -2.0 < -1.0",                          OP_FCMP_S,      CMP_LT,    CVT_NN,    CMP,     f32_to_u32(-2.0f),                 f32_to_u32(-1.0f),                0,                                0,0,0,0,0, 1},
+            {"FCMP.S: 2.0 = 2.0",                            OP_FCMP_S,      CMP_EQ,    CVT_NN,    CMP,     f32_to_u32(2.0f),                  f32_to_u32(2.0f),                 0,                                0,0,0,0,0, 1},
+            {"FCMP.S: 1.0 <= 2.0",                           OP_FCMP_S,      CMP_LE,    CVT_NN,    CMP,     f32_to_u32(1.0f),                  f32_to_u32(2.0f),                 0,                                0,0,0,0,0, 1},
+            {"FCMP.S: 0.0 < -1.0",                           OP_FCMP_S,      CMP_LT,    CVT_NN,    CMP,     f32_to_u32(0.0f),                  f32_to_u32(-1.0f),                0,                                0,0,0,0,0, 0},
+            {"FCMP.S: 3.0 = 2.0",                            OP_FCMP_S,      CMP_EQ,    CVT_NN,    CMP,     f32_to_u32(3.0f),                  f32_to_u32(2.0f),                 0,                                0,0,0,0,0, 0},
+            {"FCMP.S: 2.0 <= 1.0",                           OP_FCMP_S,      CMP_LE,    CVT_NN,    CMP,     f32_to_u32(2.0f),                  f32_to_u32(1.0f),                 0,                                0,0,0,0,0, 0},
+            {"FCMP.S: +0 = -0",                              OP_FCMP_S,      CMP_EQ,    CVT_NN,    CMP,     f32_to_u32(0.0f),                  f32_to_u32(-0.0f),                0,                                0,0,0,0,0, 1},
+            {"FCMP.S: NaN = 2.0",                            OP_FCMP_S,      CMP_EQ,    CVT_NN,    CMP,     f32_to_u32(NAN),                   f32_to_u32(2.0f),                 0,                                0,0,0,0,0, 0},
+            {"FCMP.S: SNaN = 2.0",                           OP_FCMP_S,      CMP_EQ,    CVT_NN,    CMP,     0x7f800001,                        f32_to_u32(2.0f),                 0,                                1,0,0,0,0, 0},
+            {"FCMP.S: Normal <= Denormal",                   OP_FCMP_S,      CMP_LE,    CVT_NN,    CMP,     0x00800000,                        0x00000001,                       0,                                0,0,0,0,0, 0},
+            {"FCMP.S: Denormal <= Normal",                   OP_FCMP_S,      CMP_LE,    CVT_NN,    CMP,     0x00000001,                        0x00800000,                       0,                                0,0,0,0,0, 1},
+        // DP_Compare    
+            {"FCMP.D: -2.0 < -1.0",                          OP_FCMP_D,      CMP_LT,    CVT_NN,    CMP,     f64_to_u64(-2.0),                  f64_to_u64(-1.0),                 0,                                0,0,0,0,0, 1},
+            {"FCMP.D: 2.0 = 2.0",                            OP_FCMP_D,      CMP_EQ,    CVT_NN,    CMP,     f64_to_u64(2.0),                   f64_to_u64(2.0),                  0,                                0,0,0,0,0, 1},
+            {"FCMP.D: 1.0 <= 2.0",                           OP_FCMP_D,      CMP_LE,    CVT_NN,    CMP,     f64_to_u64(1.0),                   f64_to_u64(2.0),                  0,                                0,0,0,0,0, 1},
+            {"FCMP.D: 0.0 < -1.0",                           OP_FCMP_D,      CMP_LT,    CVT_NN,    CMP,     f64_to_u64(0.0),                   f64_to_u64(-1.0),                 0,                                0,0,0,0,0, 0},
+            {"FCMP.D: 3.0 = 2.0",                            OP_FCMP_D,      CMP_EQ,    CVT_NN,    CMP,     f64_to_u64(3.0),                   f64_to_u64(2.0),                  0,                                0,0,0,0,0, 0},
+            {"FCMP.D: 2.0 <= 1.0",                           OP_FCMP_D,      CMP_LE,    CVT_NN,    CMP,     f64_to_u64(2.0),                   f64_to_u64(1.0),                  0,                                0,0,0,0,0, 0},
+            {"FCMP.D: +0 = -0",                              OP_FCMP_D,      CMP_EQ,    CVT_NN,    CMP,     f64_to_u64(0.0),                   f64_to_u64(-0.0),                 0,                                0,0,0,0,0, 1},
+            {"FCMP.D: NaN = 2.0",                            OP_FCMP_D,      CMP_EQ,    CVT_NN,    CMP,     f64_to_u64(NAN),                   f64_to_u64(2.0),                  0,                                0,0,0,0,0, 0},
+            {"FCMP.D: SNaN = 2.0",                           OP_FCMP_D,      CMP_EQ,    CVT_NN,    CMP,     0xfff0000000000001,                f64_to_u64(2.0),                  0,                                1,0,0,0,0, 0},
+            {"FCMP.D: Normal <= Denormal",                   OP_FCMP_D,      CMP_LE,    CVT_NN,    CMP,     0x0010000000000000,                0x0000000000000001,               0,                                0,0,0,0,0, 0},
+            {"FCMP.D: Denormal <= Normal",                   OP_FCMP_D,      CMP_LE,    CVT_NN,    CMP,     0x0000000000000001,                0x0010000000000000,               0,                                0,0,0,0,0, 1},
+    
+        // --- Conversion Tests ---    
+        // SP_Convert    
+            {"FCVT.D.S: NaN -> NaN",                         OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    f32_to_u32(NAN),                   0,                                f64_to_u64(NAN),                  1,0,0,0,0, 0},
+            {"FCVT.D.S: Inf -> Inf",                         OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    f32_to_u32(INFINITY),              0,                                f64_to_u64(INFINITY),             0,0,0,0,0, 0},
+            {"FCVT.WU.S: NaN -> Max uint",                   OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(NAN),                   0,                                4294967295U,                      1,0,0,0,0, 0},
+            {"FCVT.WU.S: Inf -> Max uint",                   OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(INFINITY),              0,                                4294967295U,                      1,0,1,0,0, 0},
+            {"FCVT.WU.S: -Inf -> 0",                         OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(-INFINITY),             0,                                0U,                               1,0,0,0,0, 0},
+            {"FCVT.W.S: NaN -> Max uint",                    OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(NAN),                   0,                                i32_to_u32(INT32_MIN),            1,0,0,0,0, 0},
+            {"FCVT.W.S: Inf -> Max uint",                    OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(INFINITY),              0,                                i32_to_u32(INT32_MAX),            1,0,1,0,0, 0},
+            {"FCVT.W.S: -Inf -> 0",                          OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(-INFINITY),             0,                                i32_to_u32(INT32_MIN),            1,0,1,0,0, 0},
+    
+            {"FCVT.D.S: float(0.0) -> double",               OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    f32_to_u32(0.0f),                  0,                                f64_to_u64(0.0),                  0,0,0,0,0, 0},
+            {"FCVT.D.S: float(3.75) -> double",              OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    f32_to_u32(3.75f),                 0,                                f64_to_u64(3.75),                 0,0,0,0,0, 0},
+            {"FCVT.D.S: float(-3.75) -> double",             OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    f32_to_u32(-3.75f),                0,                                f64_to_u64(-3.75),                0,0,0,0,0, 0},
+            {"FCVT.D.S: Max float -> double",                OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    0x7f7fffff,                        0,                                0x47EFFFFFE0000000,               0,0,0,0,0, 0},
+            {"FCVT.D.S: Min Denormal -> double",             OP_FCVT_D_S,    RNE,       CVT_NN,    FP64,    0x00000001,                        0,                                0x36A0000000000000,               0,0,0,0,0, 0},
+    
+            {"FCVT.WU.S: float(0.0) -> uint",                OP_FCVT_W_S,    RUP,       CVT_WU,    UINT,    f32_to_u32(0.0f),                  0,                                0U,                               0,0,0,0,0, 0},
+            {"FCVT.WU.S: float(0.75) -> uint",               OP_FCVT_W_S,    RUP,       CVT_WU,    UINT,    f32_to_u32(0.75f),                 0,                                1U,                               0,0,0,0,1, 0},
+            {"FCVT.WU.S: float(2.0) -> uint",                OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(2.0f),                  0,                                2U,                               0,0,0,0,0, 0},
+            {"FCVT.WU.S: float(3.75) -> uint",               OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(3.75f),                 0,                                4U,                               0,0,0,0,1, 0},
+            {"FCVT.WU.S: float(-3.75) -> uint",              OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(-3.75f),                0,                                0U,                               1,0,0,0,0, 0},
+            {"FCVT.WU.S: float(31457280.0) -> uint",         OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(31457280.0f),           0,                                31457280U,                        0,0,0,0,0, 0},
+            {"FCVT.WU.S: float(2.1) -> uint (RNE)",          OP_FCVT_W_S,    RNE,       CVT_WU,    UINT,    f32_to_u32(2.1f),                  0,                                2U,                               0,0,0,0,1, 0},
+            {"FCVT.WU.S: float(2.1) -> uint (RTZ)",          OP_FCVT_W_S,    RTZ,       CVT_WU,    UINT,    f32_to_u32(2.1f),                  0,                                2U,                               0,0,0,0,1, 0},
+            {"FCVT.WU.S: float(2.1) -> uint (RUP)",          OP_FCVT_W_S,    RUP,       CVT_WU,    UINT,    f32_to_u32(2.1f),                  0,                                3U,                               0,0,0,0,1, 0},
+            {"FCVT.WU.S: float(2.1) -> uint (RDN)",          OP_FCVT_W_S,    RDN,       CVT_WU,    UINT,    f32_to_u32(2.1f),                  0,                                2U,                               0,0,0,0,1, 0},
+            {"FCVT.WU.S: float(2.1) -> uint (RMM)",          OP_FCVT_W_S,    RMM,       CVT_WU,    UINT,    f32_to_u32(2.1f),                  0,                                3U,                               0,0,0,0,1, 0},
+    
+            {"FCVT.W.S: float(0.0) -> int",                  OP_FCVT_W_S,    RUP,       CVT_W,     INT,     f32_to_u32(0.0f),                  0,                                i32_to_u32(0),                    0,0,0,0,0, 0},
+            {"FCVT.W.S: float(0.75) -> int",                 OP_FCVT_W_S,    RUP,       CVT_W,     INT,     f32_to_u32(0.75f),                 0,                                i32_to_u32(1),                    0,0,0,0,1, 0},
+            {"FCVT.W.S: float(-0.75) -> int",                OP_FCVT_W_S,    RDN,       CVT_W,     INT,     f32_to_u32(-0.75f),                0,                                i32_to_u32(-1),                   0,0,0,0,1, 0},
+            {"FCVT.W.S: float(3.75) -> int",                 OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(3.75f),                 0,                                i32_to_u32(4),                    0,0,0,0,1, 0},
+            {"FCVT.W.S: float(-3.75) -> int",                OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(-3.75f),                0,                                i32_to_u32(-4),                   0,0,0,0,1, 0},
+            {"FCVT.W.S: float(31457280.0) -> int",           OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(31457280.0f),           0,                                i32_to_u32(31457280),             0,0,0,0,0, 0},
+            {"FCVT.W.S: float(-31457280.0) -> int",          OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(-31457280.0f),          0,                                i32_to_u32(-31457280),            0,0,0,0,0, 0},
+            {"FCVT.W.S: float(2147483648.0) -> int",         OP_FCVT_W_S,    RUP,       CVT_W,     INT,     f32_to_u32(2147483648.0f),         0,                                i32_to_u32(INT32_MAX),            1,0,1,0,1, 0},
+            {"FCVT.W.S: float(-2147483648.0) -> int",        OP_FCVT_W_S,    RDN,       CVT_W,     INT,     f32_to_u32(-2147483648.0f),        0,                                i32_to_u32(INT32_MIN),            0,0,0,0,0, 0},
+            {"FCVT.W.S: float(2.1) -> int (RNE)",            OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(2.1f),                  0,                                i32_to_u32(2),                    0,0,0,0,1, 0},
+            {"FCVT.W.S: float(2.1) -> int (RTZ)",            OP_FCVT_W_S,    RTZ,       CVT_W,     INT,     f32_to_u32(2.1f),                  0,                                i32_to_u32(2),                    0,0,0,0,1, 0},
+            {"FCVT.W.S: float(2.1) -> int (RUP)",            OP_FCVT_W_S,    RUP,       CVT_W,     INT,     f32_to_u32(2.1f),                  0,                                i32_to_u32(3),                    0,0,0,0,1, 0},
+            {"FCVT.W.S: float(2.1) -> int (RDN)",            OP_FCVT_W_S,    RDN,       CVT_W,     INT,     f32_to_u32(2.1f),                  0,                                i32_to_u32(2),                    0,0,0,0,1, 0},
+            {"FCVT.W.S: float(2.1) -> int (RMM)",            OP_FCVT_W_S,    RMM,       CVT_W,     INT,     f32_to_u32(2.1f),                  0,                                i32_to_u32(3),                    0,0,0,0,1, 0},
+            {"FCVT.W.S: float(-2.1) -> int (RNE)",           OP_FCVT_W_S,    RNE,       CVT_W,     INT,     f32_to_u32(-2.1f),                 0,                                i32_to_u32(-2),                   0,0,0,0,1, 0},
+            {"FCVT.W.S: float(-2.1) -> int (RTZ)",           OP_FCVT_W_S,    RTZ,       CVT_W,     INT,     f32_to_u32(-2.1f),                 0,                                i32_to_u32(-2),                   0,0,0,0,1, 0},
+            {"FCVT.W.S: float(-2.1) -> int (RUP)",           OP_FCVT_W_S,    RUP,       CVT_W,     INT,     f32_to_u32(-2.1f),                 0,                                i32_to_u32(-2),                   0,0,0,0,1, 0},
+            {"FCVT.W.S: float(-2.1) -> int (RDN)",           OP_FCVT_W_S,    RDN,       CVT_W,     INT,     f32_to_u32(-2.1f),                 0,                                i32_to_u32(-3),                   0,0,0,0,1, 0},
+            {"FCVT.W.S: float(-2.1) -> int (RMM)",           OP_FCVT_W_S,    RMM,       CVT_W,     INT,     f32_to_u32(-2.1f),                 0,                                i32_to_u32(-3),                   0,0,0,0,1, 0},
+    
+            {"FCVT.D.W: int(0) -> double",                   OP_FCVT_D_W,    RNE,       CVT_W,     FP64,    i32_to_u32(0),                     0,                                f64_to_u64(0.0),                  0,0,0,0,0, 0},
+            {"FCVT.D.W: int(3) -> double",                   OP_FCVT_D_W,    RNE,       CVT_W,     FP64,    i32_to_u32(3),                     0,                                f64_to_u64(3.0),                  0,0,0,0,0, 0},
+            {"FCVT.D.W: int(-3) -> double",                  OP_FCVT_D_W,    RNE,       CVT_W,     FP64,    i32_to_u32(-3),                    0,                                f64_to_u64(-3.0),                 0,0,0,0,0, 0},
+            {"FCVT.D.W: int(2147483647) -> double",          OP_FCVT_D_W,    RNE,       CVT_W,     FP64,    i32_to_u32(2147483647),            0,                                f64_to_u64(2147483647.0),         0,0,0,0,0, 0},
+            {"FCVT.D.W: int(-2147483648) -> double",         OP_FCVT_D_W,    RNE,       CVT_W,     FP64,    i32_to_u32(-2147483648),           0,                                f64_to_u64(-2147483648.0),        0,0,0,0,0, 0},
+    
+            {"FCVT.D.WU: uint(0) -> double",                 OP_FCVT_D_W,    RNE,       CVT_WU,    FP64,    0U,                                0,                                f64_to_u64(0.0),                  0,0,0,0,0, 0},
+            {"FCVT.D.WU: uint(3) -> double",                 OP_FCVT_D_W,    RNE,       CVT_WU,    FP64,    3U,                                0,                                f64_to_u64(3.0),                  0,0,0,0,0, 0},
+            {"FCVT.D.WU: uint(2147483647) -> double",        OP_FCVT_D_W,    RNE,       CVT_WU,    FP64,    2147483647U,                       0,                                f64_to_u64(2147483647.0),         0,0,0,0,0, 0},
+            {"FCVT.D.WU: uint(4294967295) -> double",        OP_FCVT_D_W,    RNE,       CVT_WU,    FP64,    4294967295U,                       0,                                f64_to_u64(4294967295.0),         0,0,0,0,0, 0},
+        // DP_Convert    
+            {"FCVT.S.D: NaN -> NaN",                         OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(NAN),                   0,                                f32_to_u32(NAN),                  1,0,0,0,0, 0},
+            {"FCVT.S.D: Inf -> Inf",                         OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(INFINITY),              0,                                f32_to_u32(INFINITY),             0,0,0,0,0, 0},
+            {"FCVT.WU.D: NaN -> Max uint",                   OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(NAN),                   0,                                4294967295U,                      1,0,0,0,0, 0},
+            {"FCVT.WU.D: Inf -> Max uint",                   OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(INFINITY),              0,                                4294967295U,                      1,0,1,0,0, 0},
+            {"FCVT.WU.D: -Inf -> 0",                         OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(-INFINITY),             0,                                0U,                               1,0,0,0,0, 0},
+            {"FCVT.W.D: NaN -> Max uint",                    OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(NAN),                   0,                                i32_to_u32(INT32_MIN),            1,0,0,0,0, 0},
+            {"FCVT.W.D: Inf -> Max uint",                    OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(INFINITY),              0,                                i32_to_u32(INT32_MAX),            1,0,1,0,0, 0},
+            {"FCVT.W.D: -Inf -> 0",                          OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(-INFINITY),             0,                                i32_to_u32(INT32_MIN),            1,0,1,0,0, 0},
+            
+            {"FCVT.S.D: double(0.0) -> float",               OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(0.0),                   0,                                f32_to_u32(0.0f),                 0,0,0,0,0, 0},
+            {"FCVT.S.D: double(3.75) -> float",              OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(3.75),                  0,                                f32_to_u32(3.75f),                0,0,0,0,0, 0},
+            {"FCVT.S.D: double(-3.75) -> float",             OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(-3.75),                 0,                                f32_to_u32(-3.75f),               0,0,0,0,0, 0},
+            {"FCVT.S.D: double(around 2^127) -> float",      OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    0x47EE000000000000,                0,                                0x7f700000,                       0,0,0,0,0, 0},
+            {"FCVT.S.D: double(around -2^127) -> float",     OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    0xC7EE000000000000,                0,                                0xff700000,                       0,0,0,0,0, 0},
+            {"FCVT.S.D: double(max float) -> float",         OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    0x47EFFFFFE0000000,                0,                                0x7f7fffff,                       0,0,0,0,0, 0},
+            {"FCVT.S.D: double(min float) -> float",         OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    0xC7EFFFFFE0000000,                0,                                0xff7fffff,                       0,0,0,0,0, 0},
+            {"FCVT.S.D: double(2e115) -> Inf",               OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(2e115),                 0,                                f32_to_u32(INFINITY),             1,0,1,0,0, 0},
+            {"FCVT.S.D: double(-2e115) -> -Inf",             OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    f64_to_u64(-2e115),                0,                                f32_to_u32(-INFINITY),            1,0,1,0,0, 0},
+            {"FCVT.S.D: double(max denormal) -> float",      OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    0x3800000000000000,                0,                                0x00400000,                       0,0,0,0,0, 0},
+            {"FCVT.S.D: double(min denormal) -> float",      OP_FCVT_S_D,    RNE,       CVT_NN,    FP32,    0x36A0000000000000,                0,                                0x00000001,                       0,0,0,0,0, 0},
+    
+            {"FCVT.WU.D: double(0.0) -> uint",               OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(0.0),                   0,                                0U,                               0,0,0,0,0, 0},
+            {"FCVT.WU.D: double(0.75) -> uint",              OP_FCVT_W_D,    RUP,       CVT_WU,    UINT,    f64_to_u64(0.75),                  0,                                1U,                               0,0,0,0,1, 0},
+            {"FCVT.WU.D: double(-0.75) -> uint",             OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(-0.75),                 0,                                0U,                               1,0,0,0,0, 0},
+            {"FCVT.WU.D: double(3.75) -> uint",              OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(3.75),                  0,                                4U,                               0,0,0,0,1, 0},
+            {"FCVT.WU.D: double(-3.75) -> uint",             OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(-3.75),                 0,                                0U,                               1,0,0,0,0, 0},
+            {"FCVT.WU.D: double(31457280.0) -> uint",        OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(31457280.0),            0,                                31457280U,                        0,0,0,0,0, 0},
+            {"FCVT.WU.D: double(-31457280.0) -> uint",       OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(-31457280.0),           0,                                0U,                               1,0,0,0,0, 0},
+            {"FCVT.WU.D: double(4294967295.0) -> uint",      OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    0x41EFFFFFFFE00000,                0,                                4294967295U,                      0,0,0,0,0, 0},
+            {"FCVT.WU.D: double(2.1) -> uint (RNE)",         OP_FCVT_W_D,    RNE,       CVT_WU,    UINT,    f64_to_u64(2.1),                   0,                                2U,                               0,0,0,0,1, 0},
+            {"FCVT.WU.D: double(2.1) -> uint (RTZ)",         OP_FCVT_W_D,    RTZ,       CVT_WU,    UINT,    f64_to_u64(2.1),                   0,                                2U,                               0,0,0,0,1, 0},
+            {"FCVT.WU.D: double(2.1) -> uint (RUP)",         OP_FCVT_W_D,    RUP,       CVT_WU,    UINT,    f64_to_u64(2.1),                   0,                                3U,                               0,0,0,0,1, 0},
+            {"FCVT.WU.D: double(2.1) -> uint (RDN)",         OP_FCVT_W_D,    RDN,       CVT_WU,    UINT,    f64_to_u64(2.1),                   0,                                2U,                               0,0,0,0,1, 0},
+            {"FCVT.WU.D: double(2.1) -> uint (RMM)",         OP_FCVT_W_D,    RMM,       CVT_WU,    UINT,    f64_to_u64(2.1),                   0,                                3U,                               0,0,0,0,1, 0},
+    
+            {"FCVT.W.D: double(0.0) -> int",                 OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(0.0),                   0,                                0U,                               0,0,0,0,0, 0},
+            {"FCVT.W.D: double(0.75) -> int",                OP_FCVT_W_D,    RUP,       CVT_W,     INT,     f64_to_u64(0.75),                  0,                                1U,                               0,0,0,0,1, 0},
+            {"FCVT.W.D: double(-0.75) -> int",               OP_FCVT_W_D,    RDN,       CVT_W,     INT,     f64_to_u64(-0.75),                 0,                                -1U,                              0,0,0,0,1, 0},
+            {"FCVT.W.D: double(3.75) -> int",                OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(3.75),                  0,                                4U,                               0,0,0,0,1, 0},
+            {"FCVT.W.D: double(-3.75) -> int",               OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(-3.75),                 0,                                -4U,                              0,0,0,0,1, 0},
+            {"FCVT.W.D: double(31457280.0) -> int",          OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(31457280.0),            0,                                31457280U,                        0,0,0,0,0, 0},
+            {"FCVT.W.D: double(-31457280.0) -> int",         OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(-31457280.0),           0,                                -31457280U,                       0,0,0,0,0, 0},
+            {"FCVT.W.D: double(2147483647.0) -> int",        OP_FCVT_W_D,    RNE,       CVT_W,     INT,     0x41DFFFFFFFC00000,                0,                                2147483647U,                      0,0,0,0,0, 0},
+            {"FCVT.W.D: double(-2147483648.0) -> int",       OP_FCVT_W_D,    RNE,       CVT_W,     INT,     0xC1E0000000000000,                0,                                -2147483648U,                     0,0,0,0,0, 0},
+            {"FCVT.W.D: double(2.1) -> int (RNE)",           OP_FCVT_W_D,    RNE,       CVT_W,     INT,     f64_to_u64(2.1),                   0,                                2U,                               0,0,0,0,1, 0},
+            {"FCVT.W.D: double(2.1) -> int (RTZ)",           OP_FCVT_W_D,    RTZ,       CVT_W,     INT,     f64_to_u64(2.1),                   0,                                2U,                               0,0,0,0,1, 0},
+            {"FCVT.W.D: double(2.1) -> int (RUP)",           OP_FCVT_W_D,    RUP,       CVT_W,     INT,     f64_to_u64(2.1),                   0,                                3U,                               0,0,0,0,1, 0},
+            {"FCVT.W.D: double(2.1) -> int (RDN)",           OP_FCVT_W_D,    RDN,       CVT_W,     INT,     f64_to_u64(2.1),                   0,                                2U,                               0,0,0,0,1, 0},
+            {"FCVT.W.D: double(2.1) -> int (RMM)",           OP_FCVT_W_D,    RMM,       CVT_W,     INT,     f64_to_u64(2.1),                   0,                                3U,                               0,0,0,0,1, 0},
+    
+            {"FCVT.S.W: int(0) -> float",                    OP_FCVT_S_W,    RNE,       CVT_W,     FP32,    i32_to_u32(0),                     0,                                f32_to_u32(0.0),                  0,0,0,0,0, 0},
+            {"FCVT.S.W: int(3) -> float",                    OP_FCVT_S_W,    RNE,       CVT_W,     FP32,    i32_to_u32(3),                     0,                                f32_to_u32(3.0),                  0,0,0,0,0, 0},
+            {"FCVT.S.W: int(-3) -> float",                   OP_FCVT_S_W,    RNE,       CVT_W,     FP32,    i32_to_u32(-3),                    0,                                f32_to_u32(-3.0),                 0,0,0,0,0, 0},
+            {"FCVT.S.W: int(2147483647) -> float",           OP_FCVT_S_W,    RNE,       CVT_W,     FP32,    i32_to_u32(2147483647),            0,                                f32_to_u32(2147483648.0),         0,0,0,0,1, 0},
+            {"FCVT.S.W: int(-2147483648) -> float",          OP_FCVT_S_W,    RNE,       CVT_W,     FP32,    i32_to_u32(-2147483648),           0,                                f32_to_u32(-2147483648.0),        0,0,0,0,0, 0},
+    
+            {"FCVT.S.WU: uint(0) -> float",                  OP_FCVT_S_W,    RNE,       CVT_WU,    FP32,    0U,                                0,                                f32_to_u32(0.0),                  0,0,0,0,0, 0},
+            {"FCVT.S.WU: uint(3) -> float",                  OP_FCVT_S_W,    RNE,       CVT_WU,    FP32,    3U,                                0,                                f32_to_u32(3.0),                  0,0,0,0,0, 0},
+            {"FCVT.S.WU: uint(2147483647) -> float",         OP_FCVT_S_W,    RNE,       CVT_WU,    FP32,    2147483647U,                       0,                                f32_to_u32(2147483648.0),         0,0,0,0,1, 0},
+            {"FCVT.S.WU: uint(4294967295) -> float",         OP_FCVT_S_W,    RNE,       CVT_WU,    FP32,    4294967295U,                       0,                                f32_to_u32(4294967296.0),         0,0,0,0,1, 0},
+    
+        // --- Multiplication Tests ---    
+        // SP_Multiplier    
+            {"FMUL.S: 0.0 * 2.5",                            OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(0.0f),                  f32_to_u32(2.5f),                 f32_to_u32(0.0f),                 0,0,0,0,0, 0},
+            {"FMUL.S: -0.0 * -0.0",                          OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(-0.0f),                 f32_to_u32(-0.0f),                f32_to_u32(0.0f),                 0,0,0,0,0, 0 },
+            {"FMUL.S: -0.0 * 2.5",                           OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(-0.0f),                 f32_to_u32(2.5f),                 f32_to_u32(-0.0f),                0,0,0,0,0, 0},
+            {"FMUL.S: Inf * 2.5",                            OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(INFINITY),              f32_to_u32(2.5f),                 f32_to_u32(INFINITY),             0,0,0,0,0, 0},
+            {"FMUL.S: Inf * 0.0 -> invalid",                 OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(INFINITY),              f32_to_u32(0.0f),                 f32_to_u32(NAN),                  1,0,0,0,0, 0},
+            {"FMUL.S: Inf * -Inf",                           OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(INFINITY),              f32_to_u32(-INFINITY),            f32_to_u32(-INFINITY),            0,0,0,0,0, 0},
+            {"FMUL.S: NaN * 3.5 -> invalid",                 OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(NAN),                   f32_to_u32(3.5f),                 f32_to_u32(NAN),                  1,0,0,0,0, 0},
+                
+            {"FMUL.S: 0.5 * 0.25",                           OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(0.5f),                  f32_to_u32(0.25f),                f32_to_u32(0.125f),               0,0,0,0,0, 0 },
+            {"FMUL.S: 3.0 * 2.5",                            OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(3.0f),                  f32_to_u32(2.5f),                 f32_to_u32(7.5f),                 0,0,0,0,0, 0 },
+            {"FMUL.S: 1.875 * 1.875",                        OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1.875f),                f32_to_u32(1.875f),               f32_to_u32(3.515625f),            0,0,0,0,0, 0 },
+            {"FMUL.S: 1.875 * -1.875",                       OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1.875f),                f32_to_u32(-1.875f),              f32_to_u32(-3.515625f),           0,0,0,0,0, 0 },
+            {"FMUL.S: 0.0 * 123.456",                        OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(0.0f),                  f32_to_u32(123.456f),             f32_to_u32(0.0f),                 0,0,0,0,0, 0 },
+            {"FMUL.S: -2.0 * 3.0",                           OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(-2.0f),                 f32_to_u32(3.0f),                 f32_to_u32(-6.0f),                0,0,0,0,0, 0 },
+            {"FMUL.S: 1e38 * 1e10 (overflow)",               OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1e38f),                 f32_to_u32(1e10f),                f32_to_u32(INFINITY),             0,0,1,0,1, 0 },
+            {"FMUL.S: 1e-38 * 1e-10 (underflow)",            OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1e-38f),                f32_to_u32(1e-10f),               f32_to_u32(0.0f),                 0,0,0,1,1, 0 },
+            {"FMUL.S: 1e-45 * 1.0",                          OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1e-45f),                f32_to_u32(1.0f),                 0x00000001,                       0,0,0,0,0, 0 },
+            {"FMUL.S: 1e-45 * 8.0",                          OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(1e-45f),                f32_to_u32(8.0f),                 0x00000008,                       0,0,0,0,0, 0 },
+            {"FMUL.S: 2.1474836E9 * 1e-45",                  OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(2.1474836E9f),          f32_to_u32(1e-45f),               0x04800000,                       0,0,0,0,0, 0 },
+            {"FMUL.S: 0.3333333 * 0.3 (RNE)",                OP_FMUL_S,      RNE,       CVT_NN,    FP32,    f32_to_u32(0.3333333f),            f32_to_u32(0.3f),                 0x3dcccccd,                       0,0,0,0,1, 0 },
+            {"FMUL.S: 0.3333333 * 0.3 (RTZ)",                OP_FMUL_S,      RTZ,       CVT_NN,    FP32,    f32_to_u32(0.3333333f),            f32_to_u32(0.3f),                 0x3dcccccc,                       0,0,0,0,1, 0 },
+            {"FMUL.S: 0.3333333 * 0.3 (RUP)",                OP_FMUL_S,      RUP,       CVT_NN,    FP32,    f32_to_u32(0.3333333f),            f32_to_u32(0.3f),                 0x3dcccccd,                       0,0,0,0,1, 0 },
+            {"FMUL.S: 0.3333333 * 0.3 (RDN)",                OP_FMUL_S,      RDN,       CVT_NN,    FP32,    f32_to_u32(0.3333333f),            f32_to_u32(0.3f),                 0x3dcccccc,                       0,0,0,0,1, 0 },
+            {"FMUL.S: 0.3333333 * 0.3 (RMM)",                OP_FMUL_S,      RMM,       CVT_NN,    FP32,    f32_to_u32(0.3333333f),            f32_to_u32(0.3f),                 0x3dcccccd,                       0,0,0,0,1, 0 },
+        // DP_Multiplier    
+            {"FMUL.D: 0.0 * 2.5",                            OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(0.0),                   f64_to_u64(2.5),                  f64_to_u64(0.0),                  0,0,0,0,0, 0},
+            {"FMUL.D: -0.0 * -0.0",                          OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(-0.0),                  f64_to_u64(-0.0),                 f64_to_u64(0.0),                  0,0,0,0,0, 0 },
+            {"FMUL.D: -0.0 * 2.5",                           OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(-0.0),                  f64_to_u64(2.5),                  f64_to_u64(-0.0),                 0,0,0,0,0, 0},
+            {"FMUL.D: Inf * 2.5",                            OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(INFINITY),              f64_to_u64(2.5),                  f64_to_u64(INFINITY),             0,0,0,0,0, 0},
+            {"FMUL.D: Inf * 0.0 -> invalid",                 OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(INFINITY),              f64_to_u64(0.0),                  f64_to_u64(NAN),                  1,0,0,0,0, 0},
+            {"FMUL.D: Inf * -Inf",                           OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(INFINITY),              f64_to_u64(-INFINITY),            f64_to_u64(-INFINITY),            0,0,0,0,0, 0},
+            {"FMUL.D: NaN * 3.5 -> invalid",                 OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(NAN),                   f64_to_u64(3.5),                  f64_to_u64(NAN),                  1,0,0,0,0, 0},
+    
+            {"FMUL.D: 0.5 * 0.25",                           OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(0.5),                   f64_to_u64(0.25),                 f64_to_u64(0.125),                0,0,0,0,0, 0 },
+            {"FMUL.D: 3.0 * 2.5",                            OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(3.0),                   f64_to_u64(2.5),                  f64_to_u64(7.5),                  0,0,0,0,0, 0 },
+            {"FMUL.D: 1.875 * 1.875",                        OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(1.875),                 f64_to_u64(1.875),                f64_to_u64(3.515625),             0,0,0,0,0, 0 },
+            {"FMUL.D: 1.875 * -1.875",                       OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(1.875),                 f64_to_u64(-1.875),               f64_to_u64(-3.515625),            0,0,0,0,0, 0 },
+            {"FMUL.D: 0.0 * 123.456",                        OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(0.0),                   f64_to_u64(123.456),              f64_to_u64(0.0),                  0,0,0,0,0, 0 },
+            {"FMUL.D: -2.0 * 3.0",                           OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(-2.0),                  f64_to_u64(3.0),                  f64_to_u64(-6.0),                 0,0,0,0,0, 0 },
+            {"FMUL.D: 1e300 * 1e100 (overflow)",             OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(1e300),                 f64_to_u64(1e100),                f64_to_u64(INFINITY),             0,0,1,0,1, 0 },
+            {"FMUL.D: 1e-300 * 1e-100 (underflow)",          OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(1e-300),                f64_to_u64(1e-100),               f64_to_u64(0.0),                  0,0,0,1,1, 0 },
+            {"FMUL.D: Denormal 1 (small norm * small norm)", OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(pow(2.0, -1020.0)),     f64_to_u64(pow(2.0, -50.0)),      f64_to_u64(pow(2.0, -1070.0)),    0,0,0,0,0, 0 },
+            {"FMUL.D: Denormal 2 (norm * denorm)",           OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(pow(2.0, 10.0)),        f64_to_u64(pow(2.0, -1070.0)),    f64_to_u64(pow(2.0, -1060.0)),    0,0,0,0,0, 0 },
+            {"FMUL.D: Denormal 3 (denorm * denorm)",         OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(pow(2.0, -1070.0)),     f64_to_u64(pow(2.0, -4.0)),       f64_to_u64(pow(2.0, -1074.0)),    0,0,0,0,0, 0 },
+            {"FMUL.D: 0.3333333333333333 * 0.3 (RNE)",       OP_FMUL_D,      RNE,       CVT_NN,    FP64,    f64_to_u64(0.3333333333333333),    f64_to_u64(0.3),                  0x3fb9999999999999,               0,0,0,0,1, 0 },
+            {"FMUL.D: 0.3333333333333333 * 0.3 (RTZ)",       OP_FMUL_D,      RTZ,       CVT_NN,    FP64,    f64_to_u64(0.3333333333333333),    f64_to_u64(0.3),                  0x3fb9999999999998,               0,0,0,0,1, 0 },
+            {"FMUL.D: 0.3333333333333333 * 0.3 (RUP)",       OP_FMUL_D,      RUP,       CVT_NN,    FP64,    f64_to_u64(0.3333333333333333),    f64_to_u64(0.3),                  0x3fb9999999999999,               0,0,0,0,1, 0 },
+            {"FMUL.D: 0.3333333333333333 * 0.3 (RDN)",       OP_FMUL_D,      RDN,       CVT_NN,    FP64,    f64_to_u64(0.3333333333333333),    f64_to_u64(0.3),                  0x3fb9999999999998,               0,0,0,0,1, 0 },
+            {"FMUL.D: 0.3333333333333333 * 0.3 (RMM)",       OP_FMUL_D,      RMM,       CVT_NN,    FP64,    f64_to_u64(0.3333333333333333),    f64_to_u64(0.3),                  0x3fb9999999999999,               0,0,0,0,1, 0 },
     };
 
     // reset
@@ -451,7 +472,7 @@ int main(int argc, char** argv, char** env) {
     // run tests
     int passed_count = 0;
     for (const auto& test : test_suite) {
-        std::cout << "Running test: " << test.name << "..." << std::endl;
+        std::cout << "Running test: " << test.name << " ..." << std::endl;
         if (run_test(top, tfp, test)) {
             std::cout << "  \033[32m[PASS]\033[0m" << std::endl;
             passed_count++;
