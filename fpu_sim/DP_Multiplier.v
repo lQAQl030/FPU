@@ -1,12 +1,12 @@
 module DP_Multiplier (
-    input logic [63:0] operand_a,
-    input logic [63:0] operand_b,
-    input logic [2:0]  rounding_mode,
-    output logic [63:0] result,
-    output logic       flag_invalid,
-    output logic       flag_overflow,
-    output logic       flag_underflow,
-    output logic       flag_inexact
+    input [63:0] operand_a,
+    input [63:0] operand_b,
+    input [2:0]  rounding_mode,
+    output reg [63:0] result,
+    output reg       flag_invalid,
+    output reg       flag_overflow,
+    output reg       flag_underflow,
+    output reg       flag_inexact
 );
     // operand a
     reg sign_a_dec;
