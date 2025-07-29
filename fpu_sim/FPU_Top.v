@@ -19,10 +19,7 @@ module FPU_Top (
     output       flag_divbyzero,
     output       flag_overflow,
     output       flag_underflow,
-    output       flag_inexact,
-
-    // --- Comparison Flags (only valid for compare opcodes) ---
-    output       flag_cmp
+    output       flag_inexact
 );
 
     // --- Opcode Definitions ---
@@ -187,7 +184,6 @@ module FPU_Top (
         flag_overflow  = 1'b0;
         flag_underflow = 1'b0;
         flag_inexact   = 1'b0;
-        flag_cmp = 0;
 
         convert_input_type = '0;
         convert_output_type = '0;
@@ -203,11 +199,11 @@ module FPU_Top (
                 {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {dp_adder_invalid, dp_adder_overflow, dp_adder_underflow, dp_adder_inexact};
             end
             OP_FCMP_S: begin
-                flag_cmp = sp_cmp;
+                result_out = {63'b0, sp_cmp};
                 flag_invalid = sp_cmp_invalid;
             end
             OP_FCMP_D: begin
-                flag_cmp = dp_cmp;
+                result_out = {63'b0, dp_cmp};
                 flag_invalid = dp_cmp_invalid;
             end
             OP_FCVT_D_S, OP_FCVT_W_S, OP_FCVT_D_W: begin
