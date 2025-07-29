@@ -18,6 +18,7 @@ VERILOG_SOURCES = \
 	SP_Compare.v DP_Compare.v \
 	SP_Convert.v DP_Convert.v \
 	SP_Multiplier.v DP_Multiplier.v \
+	SP_Divider.v DP_Divider.v \
     FPU_Top.v
 
 # --- Verilator Flags ---

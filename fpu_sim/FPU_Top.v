@@ -32,8 +32,8 @@ module FPU_Top (
     localparam OP_FSUB_D  = 7'b0000101; // FP64 Subtract
     localparam OP_FMUL_S  = 7'b0001000; // FP32 Multiply
     localparam OP_FMUL_D  = 7'b0001001; // FP64 Multiply
-    // localparam OP_FDIV_S  = 7'b0001100; // FP32 Divide
-    // localparam OP_FDIV_D  = 7'b0001101; // FP64 Divide
+    localparam OP_FDIV_S  = 7'b0001100; // FP32 Divide
+    localparam OP_FDIV_D  = 7'b0001101; // FP64 Divide
     // localparam OP_FSQRT_S = 7'b0101100; // FP32 Square Root
     // localparam OP_FSQRT_D = 7'b0101101; // FP64 Square Root
     localparam OP_FCMP_S  = 7'b1010000; // FP32 Compare
@@ -69,6 +69,12 @@ module FPU_Top (
 
     reg [63:0] dp_multiplier_result;
     reg dp_multiplier_invalid, dp_multiplier_overflow, dp_multiplier_underflow, dp_multiplier_inexact;
+
+    reg [31:0] sp_divider_result;
+    reg sp_divider_invalid, sp_divider_divbyzero, sp_divider_overflow, sp_divider_underflow, sp_divider_inexact;
+
+    reg [63:0] dp_divider_result;
+    reg dp_divider_invalid, dp_divider_divbyzero, dp_divider_overflow, dp_divider_underflow, dp_divider_inexact;
 
     // --- Sub-module control signals ---
     reg [1:0]  convert_input_type;
@@ -145,15 +151,21 @@ module FPU_Top (
         .flag_underflow(dp_multiplier_underflow), .flag_inexact(dp_multiplier_inexact)
     );
 
-    // FP_Divider divider_inst (
-    //     .clk(clk), .rst_n(rst_n),
-    //     .operand_a(operand_a), .operand_b(operand_b),
-    //     .is_double_precision(is_double),
-    //     .rounding_mode(rounding_mode),
-    //     .result(divider_result),
-    //     .flag_invalid(divider_invalid), .flag_overflow(divider_overflow),
-    //     .flag_underflow(divider_underflow), .flag_inexact(divider_inexact)
-    // );
+    SP_Divider sp_divider_inst (
+        .operand_a(operand_a[31:0]), .operand_b(operand_b[31:0]),
+        .rounding_mode(func3),
+        .result(sp_divider_result),
+        .flag_invalid(sp_divider_invalid), .flag_divbyzero(sp_divider_divbyzero),
+        .flag_overflow(sp_divider_overflow), .flag_underflow(sp_divider_underflow), .flag_inexact(sp_divider_inexact)
+    );
+
+    DP_Divider dp_divider_inst (
+        .operand_a(operand_a), .operand_b(operand_b),
+        .rounding_mode(func3),
+        .result(dp_divider_result),
+        .flag_invalid(dp_divider_invalid), .flag_divbyzero(dp_divider_divbyzero),
+        .flag_overflow(dp_divider_overflow), .flag_underflow(dp_divider_underflow), .flag_inexact(dp_divider_inexact)
+    );
 
     // FP_Sqrt sqrt_inst (
     //     .clk(clk), .rst_n(rst_n),
@@ -226,11 +238,14 @@ module FPU_Top (
                 result_out = dp_multiplier_result;
                 {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {dp_multiplier_invalid, dp_multiplier_overflow, dp_multiplier_underflow, dp_multiplier_inexact};
             end
-            // OP_FMUL_S, OP_FMUL_D: begin
-            //     is_double = opcode[0];
-            //     result_out = multiplier_result;
-            //     {flag_invalid, flag_overflow, flag_underflow, flag_inexact} = {multiplier_invalid, multiplier_overflow, multiplier_underflow, multiplier_inexact};
-            // end
+            OP_FDIV_S: begin
+                result_out = {32'b0, sp_divider_result};
+                {flag_invalid, flag_divbyzero, flag_overflow, flag_underflow, flag_inexact} = {sp_divider_invalid, sp_divider_divbyzero, sp_divider_overflow, sp_divider_underflow, sp_divider_inexact};
+            end
+            OP_FDIV_D: begin
+                result_out = dp_divider_result;
+                {flag_invalid, flag_divbyzero, flag_overflow, flag_underflow, flag_inexact} = {dp_divider_invalid, dp_divider_divbyzero, dp_divider_overflow, dp_divider_underflow, dp_divider_inexact};
+            end
             // OP_FDIV_S, OP_FDIV_D: begin
             //     is_double = opcode[0];
             //     result_out = divider_result;
